@@ -1,0 +1,138 @@
+<template>
+  <div class="relative">
+    <button
+      class="relative grid h-10 w-10 place-items-center rounded-full border border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
+      title="新訂單通知"
+      type="button"
+      @click="toggleOpen"
+    >
+      <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M10.27 21a2 2 0 0 0 3.46 0" />
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      </svg>
+      <span v-if="unreadCount > 0" class="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
+        {{ unreadCount > 99 ? "99+" : unreadCount }}
+      </span>
+      <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white" :class="connected ? 'bg-emerald-500' : 'bg-stone-400'"></span>
+    </button>
+
+    <div v-if="open" class="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
+      <div class="flex items-center justify-between border-b border-stone-100 px-4 py-3">
+        <div>
+          <p class="font-semibold text-stone-900">新訂單通知</p>
+          <p class="text-xs" :class="connected ? 'text-emerald-700' : 'text-stone-500'">{{ connected ? "即時連線中" : "連線中斷，稍後會自動重連" }}</p>
+        </div>
+        <button class="text-xs font-medium text-stone-500 hover:text-stone-900" type="button" @click="clearNotifications">清除</button>
+      </div>
+
+      <div v-if="notifications.length === 0" class="p-4 text-sm text-stone-500">目前沒有新訂單通知</div>
+      <div v-else class="max-h-96 divide-y divide-stone-100 overflow-auto">
+        <article v-for="item in notifications" :key="item.id" class="p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-semibold text-stone-900">{{ item.orderNumber }}</p>
+              <p class="mt-1 text-sm text-stone-600">{{ item.customerName }} / {{ item.customerPhone }}</p>
+              <p class="mt-1 text-xs text-stone-500">{{ formatTime(item.createdAt) }}</p>
+            </div>
+            <p class="whitespace-nowrap text-sm font-semibold text-stone-900">NT$ {{ item.totalAmount }}</p>
+          </div>
+        </article>
+      </div>
+
+      <RouterLink class="block border-t border-stone-100 px-4 py-3 text-center text-sm font-medium text-accent hover:bg-stone-50" to="/orders" @click="closePanel">
+        查看訂單
+      </RouterLink>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useAdminAuthStore } from "../stores/adminAuthStore";
+
+type NewOrderEvent = {
+  type: "new-order";
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  totalAmount: number;
+  createdAt: string;
+};
+
+type NotificationItem = NewOrderEvent & {
+  id: string;
+};
+
+const auth = useAdminAuthStore();
+const open = ref(false);
+const connected = ref(false);
+const unreadCount = ref(0);
+const notifications = ref<NotificationItem[]>([]);
+let source: EventSource | null = null;
+
+const token = computed(() => auth.token);
+
+function buildEventUrl(value: string): string {
+  const base = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "");
+  return `${base}/admin/order-events?token=${encodeURIComponent(value)}`;
+}
+
+function connect(value: string | null): void {
+  disconnect();
+  if (!value) return;
+
+  source = new EventSource(buildEventUrl(value));
+  source.addEventListener("connected", () => {
+    connected.value = true;
+  });
+  source.addEventListener("new-order", (event) => {
+    const payload = JSON.parse(event.data) as NewOrderEvent;
+    notifications.value = [{ ...payload, id: `${payload.orderNumber}-${Date.now()}` }, ...notifications.value].slice(0, 20);
+    unreadCount.value += 1;
+  });
+  source.onerror = () => {
+    connected.value = false;
+  };
+}
+
+function disconnect(): void {
+  connected.value = false;
+  if (source) {
+    source.close();
+    source = null;
+  }
+}
+
+function toggleOpen(): void {
+  open.value = !open.value;
+  if (open.value) markRead();
+}
+
+function markRead(): void {
+  unreadCount.value = 0;
+}
+
+function closePanel(): void {
+  unreadCount.value = 0;
+  open.value = false;
+}
+
+function clearNotifications(): void {
+  notifications.value = [];
+  unreadCount.value = 0;
+}
+
+function formatTime(value: string): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(new Date(value));
+}
+
+watch(token, connect, { immediate: true });
+onBeforeUnmount(disconnect);
+</script>

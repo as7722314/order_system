@@ -1,7 +1,10 @@
 <template>
   <div class="min-h-screen">
     <aside v-if="auth.isLoggedIn" class="fixed inset-y-0 left-0 hidden w-60 border-r border-stone-200 bg-white p-4 md:block">
-      <h1 class="mb-6 text-lg font-semibold text-accent">管理後台</h1>
+      <div class="mb-6 flex items-center justify-between gap-3">
+        <h1 class="text-lg font-semibold text-accent">管理後台</h1>
+        <AdminNotificationBell />
+      </div>
       <nav class="space-y-1 text-sm">
         <RouterLink v-for="link in links" :key="link.to" class="block rounded-md px-3 py-2 hover:bg-stone-100" :to="link.to">{{ link.label }}</RouterLink>
       </nav>
@@ -14,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminNotificationBell from "./components/AdminNotificationBell.vue";
 import { useAdminAuthStore } from "./stores/adminAuthStore";
 
 const auth = useAdminAuthStore();
@@ -26,4 +30,3 @@ const links = [
   { to: "/reports", label: "報表" }
 ];
 </script>
-

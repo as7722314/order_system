@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { OrderStatus as OrderStatusType, Prisma } from "@prisma/client";
+import { broadcastNewOrderEvent } from "../services/adminOrderEventService.js";
 import { notifyNewOrder } from "../services/lineOrderNotificationService.js";
 import { calculateOrder, ensureStatusTransition, type CatalogProduct, type OrderLineInput } from "../services/orderRules.js";
 import { ok } from "../utils/apiResponse.js";
@@ -94,6 +95,7 @@ export async function createOrder(req: Request, res: Response): Promise<Response
         customerName,
         customerPhone: body.customerPhone,
         totalAmount: order.totalAmount,
+        createdAt: order.createdAt.toISOString(),
         note: body.note,
         items: calculated.lines.map((line) => ({
           productName: line.productName,
@@ -104,6 +106,13 @@ export async function createOrder(req: Request, res: Response): Promise<Response
         }))
       }
     };
+  });
+  broadcastNewOrderEvent({
+    orderNumber: result.notification.orderNumber,
+    customerName: result.notification.customerName,
+    customerPhone: result.notification.customerPhone,
+    totalAmount: result.notification.totalAmount,
+    createdAt: result.notification.createdAt
   });
   void notifyNewOrder(result.notification).catch((error: unknown) => {
     console.warn("[line-order-notification] failed to send new order notification", error);
@@ -216,12 +225,3 @@ export async function cancelOrder(req: Request, res: Response): Promise<Response
   });
   return ok(res, updated);
 }
-
-
-
-
-
-
-
-
-

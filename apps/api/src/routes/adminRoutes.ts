@@ -15,6 +15,7 @@ import {
   updateProduct,
   updateProductStatus
 } from "../controllers/adminCatalogController.js";
+import { streamAdminOrderEvents } from "../controllers/adminOrderEventController.js";
 import { cancelOrder, getAdminOrder, listAdminOrders, updateOrderStatus } from "../controllers/orderController.js";
 import { createExpense, deleteExpense, listExpenses, updateExpense } from "../controllers/expenseController.js";
 import { dailyReport, monthlyReport } from "../controllers/reportController.js";
@@ -42,6 +43,8 @@ import {
 } from "../validators/expenseValidators.js";
 
 export const adminRoutes = Router();
+
+adminRoutes.get("/admin/order-events", streamAdminOrderEvents);
 
 adminRoutes.use(requireAuth, requireRole(UserRole.ADMIN));
 
@@ -74,7 +77,3 @@ adminRoutes.delete("/admin/expenses/:id", asyncHandler(deleteExpense));
 
 adminRoutes.get("/admin/reports/daily", validateQuery(dailyReportQuerySchema), asyncHandler(dailyReport));
 adminRoutes.get("/admin/reports/monthly", validateQuery(monthlyReportQuerySchema), asyncHandler(monthlyReport));
-
-
-
-
