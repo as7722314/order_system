@@ -58,34 +58,11 @@ import { onMounted, ref } from "vue";
 import { cancelOrder, listOrders, updateOrderStatus } from "../api/client";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderStatus } from "../types/admin";
+import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
 
 const orders = ref<Order[]>([]);
 const loading = ref(false);
 const error = ref("");
-
-type StatusAction = { status: OrderStatus; label: string; className: string };
-
-const actionMap: Record<OrderStatus, StatusAction[]> = {
-  PENDING: [{ status: "PREPARING", label: "開始製作", className: "bg-amber-500 text-white" }],
-  CONFIRMED: [{ status: "PREPARING", label: "開始製作", className: "bg-amber-500 text-white" }],
-  PREPARING: [{ status: "READY", label: "完成製作", className: "bg-sky-600 text-white" }],
-  READY: [{ status: "COMPLETED", label: "完成訂單", className: "bg-emerald-600 text-white" }],
-  COMPLETED: [],
-  CANCELLED: []
-};
-
-function normalizeStatus(status: Order["status"]): OrderStatus {
-  return status.toUpperCase() as OrderStatus;
-}
-
-function statusActions(status: Order["status"]): StatusAction[] {
-  return actionMap[normalizeStatus(status)] ?? [];
-}
-
-function canCancel(status: Order["status"]): boolean {
-  const normalized = normalizeStatus(status);
-  return normalized !== "COMPLETED" && normalized !== "CANCELLED";
-}
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -127,4 +104,3 @@ async function cancel(order: Order): Promise<void> {
 
 onMounted(load);
 </script>
-
