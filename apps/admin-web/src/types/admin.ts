@@ -77,13 +77,9 @@ export type OnsiteOrderItemInput = {
   productId: string;
   quantity: number;
   flavorIds: string[];
-  note?: string;
 };
 
 export type OnsiteOrderPayload = {
-  customerName: string;
-  customerPhone: string;
-  note?: string;
   items: OnsiteOrderItemInput[];
 };
 export type Expense = {

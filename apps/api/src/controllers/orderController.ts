@@ -161,8 +161,8 @@ export async function lookupOrder(req: Request, res: Response): Promise<Response
 
 export async function createAdminOnsiteOrder(req: Request, res: Response): Promise<Response> {
   const body = req.body as {
-    customerName: string;
-    customerPhone: string;
+    customerName?: string;
+    customerPhone?: string;
     note?: string;
     items: OrderLineInput[];
   };
@@ -197,8 +197,8 @@ export async function createAdminOnsiteOrder(req: Request, res: Response): Promi
     return tx.order.create({
       data: {
         orderNumber,
-        customerName: body.customerName,
-        customerPhone: body.customerPhone,
+        customerName: body.customerName?.trim() || "現場客人",
+        customerPhone: body.customerPhone?.trim() || "",
         pickupTime: null,
         status: OrderStatus.PREPARING,
         subtotal: calculated.subtotal,

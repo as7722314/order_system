@@ -122,21 +122,6 @@
           </button>
         </div>
 
-        <div class="mt-5 grid gap-3 md:grid-cols-3">
-          <label class="grid gap-1 text-sm font-medium text-stone-700">
-            客戶名稱
-            <input v-model.trim="onsiteForm.customerName" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="現場客人" />
-          </label>
-          <label class="grid gap-1 text-sm font-medium text-stone-700">
-            電話
-            <input v-model.trim="onsiteForm.customerPhone" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="未提供" />
-          </label>
-          <label class="grid gap-1 text-sm font-medium text-stone-700 md:col-span-3">
-            備註
-            <textarea v-model.trim="onsiteForm.note" class="min-h-20 rounded-md border border-stone-300 p-3 font-normal" placeholder="現場點餐備註"></textarea>
-          </label>
-        </div>
-
         <div class="mt-5 space-y-3">
           <div class="flex items-center justify-between gap-3">
             <h3 class="font-semibold text-stone-900">商品明細</h3>
@@ -144,7 +129,7 @@
           </div>
 
           <section v-for="line in onsiteLines" :key="line.localId" class="rounded-lg border border-stone-200 p-4">
-            <div class="grid gap-3 lg:grid-cols-[1fr_120px_auto]">
+            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem] lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
               <label class="grid gap-1 text-sm font-medium text-stone-700">
                 商品
                 <select v-model="line.productId" class="rounded-md border border-stone-300 p-3 font-normal" @change="resetOnsiteLineFlavors(line)">
@@ -154,9 +139,9 @@
               </label>
               <label class="grid gap-1 text-sm font-medium text-stone-700">
                 數量
-                <input v-model.number="line.quantity" class="rounded-md border border-stone-300 p-3 font-normal" min="1" type="number" />
+                <input v-model.number="line.quantity" class="w-full rounded-md border border-stone-300 p-3 font-normal" min="1" type="number" />
               </label>
-              <button class="self-end rounded-md border border-red-300 px-3 py-3 text-sm font-medium text-red-700" :disabled="onsiteLines.length === 1" type="button" @click="removeOnsiteLine(line.localId)">移除</button>
+              <button class="self-end rounded-md border border-red-300 px-3 py-3 text-sm font-medium text-red-700 md:col-span-2 lg:col-span-1" :disabled="onsiteLines.length === 1" type="button" @click="removeOnsiteLine(line.localId)">移除</button>
             </div>
 
             <div v-if="line.productId" class="mt-3">
@@ -170,9 +155,8 @@
               <p v-if="flavorOptionsForProduct(line.productId).length === 0" class="text-sm text-stone-500">此商品目前沒有可選口味。</p>
             </div>
 
-            <div class="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-              <input v-model.trim="line.note" class="rounded-md border border-stone-300 p-3 text-sm" placeholder="品項備註" />
-              <p class="self-center text-right text-sm font-semibold text-stone-900">小計 NT$ {{ lineSubtotal(line) }}</p>
+            <div class="mt-3 flex justify-end">
+              <p class="text-sm font-semibold text-stone-900">小計 NT$ {{ lineSubtotal(line) }}</p>
             </div>
           </section>
         </div>
@@ -191,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { cancelOrder, createOnsiteOrder, deleteOrder, listFlavors, listOrders, listProducts, restoreOrder, updateOrderStatus } from "../api/client";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Flavor, Order, OrderStatus, Product } from "../types/admin";
@@ -203,7 +187,6 @@ type OnsiteLine = {
   productId: string;
   quantity: number;
   flavorIds: string[];
-  note: string;
 };
 
 const orders = ref<Order[]>([]);
@@ -216,7 +199,6 @@ const onsiteOpen = ref(false);
 const error = ref("");
 const message = ref("");
 const onsiteError = ref("");
-const onsiteForm = reactive({ customerName: "現場客人", customerPhone: "未提供", note: "" });
 const onsiteLines = ref<OnsiteLine[]>([]);
 
 const activeProducts = computed(() => products.value.filter((product) => product.isActive));
@@ -236,7 +218,7 @@ function formatDateTime(value: string): string {
 }
 
 function newOnsiteLine(): OnsiteLine {
-  return { localId: crypto.randomUUID(), productId: "", quantity: 1, flavorIds: [], note: "" };
+  return { localId: crypto.randomUUID(), productId: "", quantity: 1, flavorIds: [] };
 }
 
 function selectedProduct(productId: string): Product | undefined {
@@ -260,9 +242,6 @@ function lineSubtotal(line: OnsiteLine): number {
 }
 
 function resetOnsiteForm(): void {
-  onsiteForm.customerName = "現場客人";
-  onsiteForm.customerPhone = "未提供";
-  onsiteForm.note = "";
   onsiteLines.value = [newOnsiteLine()];
   onsiteError.value = "";
 }
@@ -392,10 +371,6 @@ async function restore(order: Order): Promise<void> {
 async function submitOnsite(): Promise<void> {
   onsiteError.value = "";
   const validLines = onsiteLines.value.filter((line) => line.productId && Number(line.quantity) > 0);
-  if (!onsiteForm.customerName.trim() || !onsiteForm.customerPhone.trim()) {
-    onsiteError.value = "請填寫客戶名稱與電話。";
-    return;
-  }
   if (validLines.length === 0) {
     onsiteError.value = "請至少新增一個商品品項。";
     return;
@@ -403,14 +378,10 @@ async function submitOnsite(): Promise<void> {
   savingOnsite.value = true;
   try {
     const order = await createOnsiteOrder({
-      customerName: onsiteForm.customerName.trim(),
-      customerPhone: onsiteForm.customerPhone.trim(),
-      note: onsiteForm.note.trim() || undefined,
       items: validLines.map((line) => ({
         productId: line.productId,
         quantity: Math.max(1, Number(line.quantity) || 1),
-        flavorIds: line.flavorIds,
-        note: line.note.trim() || undefined
+        flavorIds: line.flavorIds
       }))
     });
     onsiteOpen.value = false;

@@ -16,8 +16,8 @@ export const createOrderSchema = z.object({
 
 
 export const adminOnsiteOrderSchema = z.object({
-  customerName: z.string().trim().min(1).max(80),
-  customerPhone: z.string().trim().min(1).max(30),
+  customerName: z.string().trim().min(1).max(80).optional(),
+  customerPhone: z.string().trim().max(30).optional(),
   note: z.string().max(500).optional(),
   items: z.array(
     z.object({
