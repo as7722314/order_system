@@ -8,7 +8,8 @@
       <nav class="space-y-1 text-sm">
         <RouterLink v-for="link in links" :key="link.to" class="block rounded-md px-3 py-2 hover:bg-stone-100" :to="link.to">{{ link.label }}</RouterLink>
       </nav>
-      <button class="mt-6 w-full rounded-md border border-stone-300 py-2" @click="auth.logout()">登出</button>
+      <AdminInstallButton />
+      <button class="mt-4 w-full rounded-md border border-stone-300 py-2" @click="auth.logout()">登出</button>
     </aside>
     <div :class="auth.isLoggedIn ? 'md:pl-60' : ''">
       <RouterView />
@@ -17,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminInstallButton from "./components/AdminInstallButton.vue";
 import AdminNotificationBell from "./components/AdminNotificationBell.vue";
 import { useAdminAuthStore } from "./stores/adminAuthStore";
 
