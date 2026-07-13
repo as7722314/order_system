@@ -6,6 +6,7 @@ import { calculateOrder, ensureStatusTransition, type CatalogProduct, type Order
 import { ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
 import { createOrderNumber } from "../utils/orderNumber.js";
+import { phoneLast3 } from "../utils/phone.js";
 import { OrderStatus } from "../utils/prismaEnums.js";
 import { prisma } from "../utils/prisma.js";
 import { taipeiDayRange } from "../utils/time.js";
@@ -15,6 +16,10 @@ const orderInclude = {
     include: { flavors: true }
   }
 } satisfies Prisma.OrderInclude;
+
+function maskAdminOrderPhone<T extends { customerPhone: string }>(order: T): T {
+  return { ...order, customerPhone: phoneLast3(order.customerPhone) };
+}
 
 export async function createOrder(req: Request, res: Response): Promise<Response> {
   if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
@@ -110,7 +115,7 @@ export async function createOrder(req: Request, res: Response): Promise<Response
   broadcastNewOrderEvent({
     orderNumber: result.notification.orderNumber,
     customerName: result.notification.customerName,
-    customerPhone: result.notification.customerPhone,
+    customerPhone: phoneLast3(result.notification.customerPhone),
     totalAmount: result.notification.totalAmount,
     createdAt: result.notification.createdAt
   });
@@ -189,13 +194,14 @@ export async function listAdminOrders(req: Request, res: Response): Promise<Resp
       take: query.pageSize
     })
   ]);
-  return ok(res, { total, items: orders });
+  const maskedOrders = orders.map(maskAdminOrderPhone);
+  return ok(res, { total, items: maskedOrders });
 }
 
 export async function getAdminOrder(req: Request, res: Response): Promise<Response> {
   const order = await prisma.order.findUnique({ where: { id: req.params.id }, include: orderInclude });
   if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
-  return ok(res, order);
+  return ok(res, maskAdminOrderPhone(order));
 }
 
 export async function updateOrderStatus(req: Request, res: Response): Promise<Response> {
@@ -211,7 +217,7 @@ export async function updateOrderStatus(req: Request, res: Response): Promise<Re
       completedAt: status === OrderStatus.COMPLETED ? new Date() : order.completedAt
     }
   });
-  return ok(res, updated);
+  return ok(res, maskAdminOrderPhone(updated));
 }
 
 export async function cancelOrder(req: Request, res: Response): Promise<Response> {
@@ -230,7 +236,7 @@ export async function cancelOrder(req: Request, res: Response): Promise<Response
       cancelledById: req.user.id
     }
   });
-  return ok(res, updated);
+  return ok(res, maskAdminOrderPhone(updated));
 }
 
 export async function deleteOrder(req: Request, res: Response): Promise<Response> {
@@ -247,7 +253,7 @@ export async function deleteOrder(req: Request, res: Response): Promise<Response
       deletedReason: reason?.trim() || null
     }
   });
-  return ok(res, updated);
+  return ok(res, maskAdminOrderPhone(updated));
 }
 
 export async function restoreOrder(req: Request, res: Response): Promise<Response> {
@@ -262,5 +268,5 @@ export async function restoreOrder(req: Request, res: Response): Promise<Respons
       deletedReason: null
     }
   });
-  return ok(res, updated);
+  return ok(res, maskAdminOrderPhone(updated));
 }
