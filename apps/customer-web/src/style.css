@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  background: #fff5cf;
+  font-size: 24px;
+}
+
+body {
+  margin: 0;
+  color: #3a2814;
+  font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0 10px, rgba(244, 184, 64, 0.09) 10px 20px),
+    linear-gradient(180deg, #fff1a8 0%, #fff8e8 42%, #ead09a 100%);
+  min-height: 100vh;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(90deg, rgba(77, 125, 32, 0.12) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(184, 121, 19, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+a,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+button {
+  min-height: 76px;
+}
+
+input,
+textarea {
+  font-size: 30px;
+  line-height: 1.35;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 5px solid rgba(77, 125, 32, 0.35);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.top-tab.router-link-active {
+  background: #4d7d20;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(54, 92, 24, 0.24);
+}
