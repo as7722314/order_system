@@ -37,6 +37,27 @@ export type Product = {
 
 export type OrderStatus = "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
 
+export type OrderItemFlavor = {
+  id: string;
+  orderItemId: string;
+  flavorId?: string | null;
+  flavorNameSnapshot: string;
+  extraPriceSnapshot: number;
+};
+
+export type OrderItem = {
+  id: string;
+  orderId: string;
+  productId?: string | null;
+  productNameSnapshot: string;
+  quantity: number;
+  unitPrice: number;
+  flavorExtraAmount: number;
+  subtotal: number;
+  note?: string | null;
+  flavors: OrderItemFlavor[];
+};
+
 export type Order = {
   id: string;
   orderNumber: string;
@@ -44,7 +65,9 @@ export type Order = {
   customerPhone: string;
   status: OrderStatus | Lowercase<OrderStatus>;
   totalAmount: number;
+  note?: string | null;
   createdAt: string;
+  items?: OrderItem[];
 };
 
 export type Expense = {

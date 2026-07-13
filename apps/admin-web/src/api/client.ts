@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, Category, Expense, Flavor, Order, Product, Report } from "../types/admin";
+import type { ApiResponse, Category, Expense, Flavor, Order, OrderStatus, Product, Report } from "../types/admin";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
@@ -58,8 +58,16 @@ export async function saveFlavor(payload: Partial<Flavor>): Promise<void> {
   else await api.post("/admin/flavors", payload);
 }
 
-export async function listOrders(): Promise<Order[]> {
-  const response = await api.get<ApiResponse<{ items: Order[] }>>("/admin/orders");
+export type OrderListParams = {
+  status?: OrderStatus;
+  date?: string;
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export async function listOrders(params: OrderListParams = {}): Promise<Order[]> {
+  const response = await api.get<ApiResponse<{ items: Order[] }>>("/admin/orders", { params });
   return response.data.data.items;
 }
 
@@ -94,9 +102,3 @@ export async function monthlyReport(month: string): Promise<Report & { month: st
   const response = await api.get<ApiResponse<Report & { month: string; daily: { date: string; revenue: number; expense: number; netProfit: number }[] }>>("/admin/reports/monthly", { params: { month } });
   return response.data.data;
 }
-
-
-
-
-
-
