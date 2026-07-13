@@ -25,6 +25,13 @@
         <button class="text-xs font-medium text-stone-500 hover:text-stone-900" type="button" @click="clearNotifications">清除</button>
       </div>
 
+      <div class="flex items-center justify-between border-b border-stone-100 px-4 py-2 text-sm">
+        <span class="text-stone-600">通知音效</span>
+        <button class="rounded-full px-3 py-1 text-xs font-semibold" :class="soundEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'" type="button" @click="toggleSound">
+          {{ soundEnabled ? "已開啟" : "已關閉" }}
+        </button>
+      </div>
+
       <div v-if="notifications.length === 0" class="p-4 text-sm text-stone-500">目前沒有新訂單通知</div>
       <div v-else class="max-h-96 divide-y divide-stone-100 overflow-auto">
         <article v-for="item in notifications" :key="item.id" class="p-4">
@@ -77,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useAdminAuthStore } from "../stores/adminAuthStore";
 
 type NewOrderEvent = {
@@ -99,7 +106,9 @@ const connected = ref(false);
 const unreadCount = ref(0);
 const notifications = ref<NotificationItem[]>([]);
 const modalOrder = ref<NotificationItem | null>(null);
+const soundEnabled = ref(localStorage.getItem("admin_notification_sound") !== "false");
 let source: EventSource | null = null;
+let audioContext: AudioContext | null = null;
 
 const token = computed(() => auth.token);
 
@@ -122,6 +131,7 @@ function connect(value: string | null): void {
     notifications.value = [item, ...notifications.value].slice(0, 20);
     unreadCount.value += 1;
     modalOrder.value = item;
+    void playNotificationSound();
   });
   source.onerror = () => {
     connected.value = false;
@@ -165,6 +175,46 @@ function clearNotifications(): void {
   unreadCount.value = 0;
 }
 
+function toggleSound(): void {
+  soundEnabled.value = !soundEnabled.value;
+  localStorage.setItem("admin_notification_sound", String(soundEnabled.value));
+  if (soundEnabled.value) unlockAudio();
+}
+
+function getAudioContext(): AudioContext {
+  audioContext ??= new AudioContext();
+  return audioContext;
+}
+
+function unlockAudio(): void {
+  if (!soundEnabled.value) return;
+  void getAudioContext().resume().catch(() => undefined);
+  document.removeEventListener("pointerdown", unlockAudio);
+}
+
+async function playNotificationSound(): Promise<void> {
+  if (!soundEnabled.value) return;
+  try {
+    const context = getAudioContext();
+    if (context.state === "suspended") await context.resume();
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, now);
+    oscillator.frequency.setValueAtTime(1175, now + 0.12);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.4);
+  } catch {
+    // Browsers can block audio until the user interacts with the page.
+  }
+}
+
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",
@@ -177,5 +227,12 @@ function formatTime(value: string): string {
 }
 
 watch(token, connect, { immediate: true });
-onBeforeUnmount(disconnect);
+onMounted(() => {
+  document.addEventListener("pointerdown", unlockAudio, { once: true });
+});
+onBeforeUnmount(() => {
+  disconnect();
+  document.removeEventListener("pointerdown", unlockAudio);
+  if (audioContext) void audioContext.close().catch(() => undefined);
+});
 </script>
