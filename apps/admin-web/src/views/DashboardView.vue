@@ -43,7 +43,6 @@ import { cancelOrder, dailyReport, listOrders, updateOrderStatus } from "../api/
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderItem, OrderStatus } from "../types/admin";
 import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
-import { formatPhoneLast3 } from "../utils/phone";
 
 const formatter = new Intl.DateTimeFormat("sv-SE", {
   timeZone: "Asia/Taipei",
@@ -165,7 +164,7 @@ const OrderDetailList = defineComponent({
                 h("span", { class: "text-base font-semibold text-stone-900" }, order.orderNumber),
                 h(StatusBadge, { status: normalizeStatus(order.status) })
               ]),
-              h("p", { class: "mt-1 text-sm text-stone-500" }, `建立：${formatDateTime(order.createdAt)} / ${order.customerName} / ${formatPhoneLast3(order.customerPhone)}`)
+              h("p", { class: "mt-1 text-sm text-stone-500" }, `建立：${formatDateTime(order.createdAt)} / ${order.customerName} / ${order.customerPhone}`)
             ]),
             h("p", { class: "text-lg font-semibold text-stone-900" }, money(order.totalAmount))
           ]),

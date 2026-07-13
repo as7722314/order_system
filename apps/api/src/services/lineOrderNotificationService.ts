@@ -1,5 +1,4 @@
 import { env } from "../config/env.js";
-import { phoneLast3 } from "../utils/phone.js";
 
 export type NewOrderNotification = {
   orderNumber: string;
@@ -32,7 +31,7 @@ function formatOrderMessage(order: NewOrderNotification): string {
     "【新訂單通知】",
     `訂單編號：${order.orderNumber}`,
     `客戶姓名：${order.customerName}`,
-    `手機後三碼：${phoneLast3(order.customerPhone)}`,
+    `手機：${order.customerPhone}`,
     `總金額：NT$ ${order.totalAmount}`,
     order.note ? `訂單備註：${order.note}` : "",
     "",

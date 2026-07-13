@@ -46,7 +46,7 @@
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="font-semibold text-stone-900">{{ item.orderNumber }}</p>
-              <p class="mt-1 text-sm text-stone-600">{{ item.customerName }} / {{ formatPhoneLast3(item.customerPhone) }}</p>
+              <p class="mt-1 text-sm text-stone-600">{{ item.customerName }} / {{ item.customerPhone }}</p>
               <p class="mt-1 text-xs text-stone-500">{{ formatTime(item.createdAt) }}</p>
             </div>
             <p class="whitespace-nowrap text-sm font-semibold text-stone-900">NT$ {{ item.totalAmount }}</p>
@@ -77,7 +77,7 @@
         <div class="mt-4 rounded-md bg-stone-50 p-4 text-sm text-stone-700">
           <p class="font-semibold text-stone-900">{{ modalOrder.orderNumber }}</p>
           <p class="mt-2">客戶：{{ modalOrder.customerName }}</p>
-          <p class="mt-1">{{ formatPhoneLast3(modalOrder.customerPhone) }}</p>
+          <p class="mt-1">電話：{{ modalOrder.customerPhone }}</p>
           <p class="mt-1">時間：{{ formatTime(modalOrder.createdAt) }}</p>
           <p class="mt-1 text-base font-semibold text-stone-900">金額：NT$ {{ modalOrder.totalAmount }}</p>
         </div>
@@ -94,7 +94,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useAdminAuthStore } from "../stores/adminAuthStore";
-import { formatPhoneLast3 } from "../utils/phone";
 
 type NewOrderEvent = {
   type: "new-order";

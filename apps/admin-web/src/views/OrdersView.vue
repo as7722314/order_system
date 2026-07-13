@@ -35,7 +35,7 @@
             <th class="p-3">建立時間</th>
             <th v-if="viewMode === 'deleted'" class="p-3">刪除時間</th>
             <th class="p-3">客戶</th>
-            <th class="p-3">手機後三碼</th>
+            <th class="p-3">手機</th>
             <th class="p-3">狀態</th>
             <th class="p-3">金額</th>
             <th v-if="viewMode === 'deleted'" class="p-3">刪除原因</th>
@@ -48,7 +48,7 @@
             <td class="p-3 whitespace-nowrap text-stone-600">{{ formatDateTime(order.createdAt) }}</td>
             <td v-if="viewMode === 'deleted'" class="p-3 whitespace-nowrap text-stone-600">{{ order.deletedAt ? formatDateTime(order.deletedAt) : '-' }}</td>
             <td class="p-3">{{ order.customerName }}</td>
-            <td class="p-3 font-medium text-stone-700">{{ phoneLast3(order.customerPhone) }}</td>
+            <td class="p-3">{{ order.customerPhone }}</td>
             <td class="p-3"><StatusBadge :status="order.status" /></td>
             <td class="p-3">NT$ {{ order.totalAmount }}</td>
             <td v-if="viewMode === 'deleted'" class="p-3 max-w-xs text-stone-600">{{ order.deletedReason || '未填寫' }}</td>
@@ -111,7 +111,6 @@ import { cancelOrder, deleteOrder, listOrders, restoreOrder, updateOrderStatus }
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderStatus } from "../types/admin";
 import { canCancel, statusActions } from "../utils/orderStatusActions";
-import { phoneLast3 } from "../utils/phone";
 
 type OrderViewMode = "active" | "deleted";
 
