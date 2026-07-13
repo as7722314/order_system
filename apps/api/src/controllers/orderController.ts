@@ -158,6 +158,79 @@ export async function lookupOrder(req: Request, res: Response): Promise<Response
   });
 }
 
+
+export async function createAdminBackfillOrder(req: Request, res: Response): Promise<Response> {
+  const body = req.body as {
+    customerName: string;
+    customerPhone: string;
+    note?: string;
+    items: OrderLineInput[];
+  };
+  const productIds = [...new Set(body.items.map((item) => item.productId))];
+  const completedAt = new Date();
+  const order = await prisma.$transaction(async (tx) => {
+    const products = await tx.product.findMany({
+      where: { id: { in: productIds } },
+      include: {
+        productFlavors: {
+          include: { flavor: true }
+        }
+      }
+    }) as CatalogProduct[];
+    const activeFlavors = products.some((product) => product.productFlavors.length === 0)
+      ? await tx.flavor.findMany({ where: { isActive: true } })
+      : [];
+    const productsForCalculation = products.map((product) => {
+      if (product.productFlavors.length > 0) return product;
+      return {
+        ...product,
+        productFlavors: activeFlavors.map((flavor) => ({ flavorId: flavor.id, flavor }))
+      };
+    });
+    const calculated = calculateOrder(body.items, productsForCalculation);
+    let orderNumber = createOrderNumber();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const existing = await tx.order.findUnique({ where: { orderNumber } });
+      if (!existing) break;
+      orderNumber = createOrderNumber();
+      if (attempt === 2) throw new AppError("DUPLICATE_ORDER_NUMBER", "訂單編號產生失敗", 500);
+    }
+    return tx.order.create({
+      data: {
+        orderNumber,
+        customerName: body.customerName,
+        customerPhone: body.customerPhone,
+        pickupTime: null,
+        status: OrderStatus.COMPLETED,
+        subtotal: calculated.subtotal,
+        flavorExtraAmount: calculated.flavorExtraAmount,
+        totalAmount: calculated.totalAmount,
+        note: body.note,
+        completedAt,
+        items: {
+          create: calculated.lines.map((line) => ({
+            productId: line.productId,
+            productNameSnapshot: line.productName,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            flavorExtraAmount: line.flavorExtraAmount,
+            subtotal: line.subtotal,
+            note: line.note,
+            flavors: {
+              create: line.flavors.map((flavor) => ({
+                flavorId: flavor.flavorId,
+                flavorNameSnapshot: flavor.name,
+                extraPriceSnapshot: flavor.extraPrice
+              }))
+            }
+          }))
+        }
+      },
+      include: orderInclude
+    });
+  });
+  return ok(res, order, 201);
+}
 export async function listAdminOrders(req: Request, res: Response): Promise<Response> {
   const query = req.query as unknown as {
     status?: OrderStatusType;

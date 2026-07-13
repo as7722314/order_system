@@ -14,6 +14,20 @@ export const createOrderSchema = z.object({
   ).min(1)
 });
 
+
+export const adminBackfillOrderSchema = z.object({
+  customerName: z.string().trim().min(1).max(80),
+  customerPhone: z.string().trim().min(1).max(30),
+  note: z.string().max(500).optional(),
+  items: z.array(
+    z.object({
+      productId: z.string().uuid(),
+      quantity: z.number().int().min(1),
+      flavorIds: z.array(z.string().uuid()).max(2).default([]),
+      note: z.string().max(300).optional()
+    })
+  ).min(1)
+});
 export const lookupOrderSchema = z.object({
   orderNumber: z.string().min(8),
   phoneLast3: z.string().regex(/^\d{3}$/)

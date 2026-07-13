@@ -72,6 +72,20 @@ export type Order = {
   items?: OrderItem[];
 };
 
+
+export type BackfillOrderItemInput = {
+  productId: string;
+  quantity: number;
+  flavorIds: string[];
+  note?: string;
+};
+
+export type BackfillOrderPayload = {
+  customerName: string;
+  customerPhone: string;
+  note?: string;
+  items: BackfillOrderItemInput[];
+};
 export type Expense = {
   id: string;
   expenseDate: string;
