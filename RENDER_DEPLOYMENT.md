@@ -51,3 +51,12 @@ https://line-order-system-customer.onrender.com
 ```
 
 測試時可以先使用 Render 提供的 `onrender.com` 網址，不需要自備域名。
+## 免費方案注意事項
+
+Render Free tier 不支援 `preDeployCommand`，所以目前 API 會在 `startCommand` 先執行：
+
+```bash
+npm run prisma:deploy --workspace @line-order/api && npm run prisma:seed --workspace @line-order/api && npm run start --workspace @line-order/api
+```
+
+這適合測試部署。之後如果升級到付費 Web Service，可以再把 migration/seed 移回 `preDeployCommand`，啟動速度會比較穩定。

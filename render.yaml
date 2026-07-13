@@ -5,8 +5,7 @@ services:
     plan: free
     region: singapore
     buildCommand: npm ci && npm run build --workspace @line-order/api
-    preDeployCommand: npm run prisma:deploy --workspace @line-order/api && npm run prisma:seed --workspace @line-order/api
-    startCommand: npm run start --workspace @line-order/api
+    startCommand: npm run prisma:deploy --workspace @line-order/api && npm run prisma:seed --workspace @line-order/api && npm run start --workspace @line-order/api
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
