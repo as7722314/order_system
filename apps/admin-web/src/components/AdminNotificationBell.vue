@@ -16,7 +16,7 @@
       <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white" :class="connected ? 'bg-emerald-500' : 'bg-stone-400'"></span>
     </button>
 
-    <div v-if="open" class="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
+    <div v-if="open" class="absolute left-full top-0 z-20 ml-2 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
       <div class="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <div>
           <p class="font-semibold text-stone-900">新訂單通知</p>
@@ -43,6 +43,36 @@
         查看訂單
       </RouterLink>
     </div>
+
+    <div v-if="modalOrder" class="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4">
+      <section class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-sm font-medium text-red-600">新訂單</p>
+            <h2 class="mt-1 text-xl font-semibold text-stone-900">有新的訂單進來了</h2>
+          </div>
+          <button class="rounded-full p-2 text-stone-500 hover:bg-stone-100" title="關閉" type="button" @click="closeModal">
+            <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mt-4 rounded-md bg-stone-50 p-4 text-sm text-stone-700">
+          <p class="font-semibold text-stone-900">{{ modalOrder.orderNumber }}</p>
+          <p class="mt-2">客戶：{{ modalOrder.customerName }}</p>
+          <p class="mt-1">電話：{{ modalOrder.customerPhone }}</p>
+          <p class="mt-1">時間：{{ formatTime(modalOrder.createdAt) }}</p>
+          <p class="mt-1 text-base font-semibold text-stone-900">金額：NT$ {{ modalOrder.totalAmount }}</p>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" type="button" @click="closeModal">稍後處理</button>
+          <RouterLink class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white" to="/orders" @click="acknowledgeOrder">查看訂單</RouterLink>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -68,6 +98,7 @@ const open = ref(false);
 const connected = ref(false);
 const unreadCount = ref(0);
 const notifications = ref<NotificationItem[]>([]);
+const modalOrder = ref<NotificationItem | null>(null);
 let source: EventSource | null = null;
 
 const token = computed(() => auth.token);
@@ -87,8 +118,10 @@ function connect(value: string | null): void {
   });
   source.addEventListener("new-order", (event) => {
     const payload = JSON.parse(event.data) as NewOrderEvent;
-    notifications.value = [{ ...payload, id: `${payload.orderNumber}-${Date.now()}` }, ...notifications.value].slice(0, 20);
+    const item = { ...payload, id: `${payload.orderNumber}-${Date.now()}` };
+    notifications.value = [item, ...notifications.value].slice(0, 20);
     unreadCount.value += 1;
+    modalOrder.value = item;
   });
   source.onerror = () => {
     connected.value = false;
@@ -113,6 +146,16 @@ function markRead(): void {
 }
 
 function closePanel(): void {
+  unreadCount.value = 0;
+  open.value = false;
+}
+
+function closeModal(): void {
+  modalOrder.value = null;
+}
+
+function acknowledgeOrder(): void {
+  modalOrder.value = null;
   unreadCount.value = 0;
   open.value = false;
 }

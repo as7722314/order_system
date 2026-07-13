@@ -24,7 +24,7 @@
         <h2 class="text-lg font-semibold">待接單明細</h2>
         <span class="text-sm text-stone-500">{{ pendingOrders.length }} 筆</span>
       </div>
-      <OrderDetailList :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" />
+      <OrderDetailList interactive :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" />
     </section>
 
     <section class="mt-8">
@@ -32,7 +32,7 @@
         <h2 class="text-lg font-semibold">今日訂單明細</h2>
         <span class="text-sm text-stone-500">{{ todayOrders.length }} 筆</span>
       </div>
-      <OrderDetailList :disabled="loading" :orders="todayOrders" empty-text="今天尚無訂單" @cancel="cancel" @change-status="changeStatus" />
+      <OrderDetailList :orders="todayOrders" empty-text="今天尚無訂單" />
     </section>
   </main>
 </template>
@@ -135,7 +135,8 @@ const OrderDetailList = defineComponent({
   props: {
     orders: { type: Array as () => Order[], required: true },
     emptyText: { type: String, required: true },
-    disabled: { type: Boolean, default: false }
+    disabled: { type: Boolean, default: false },
+    interactive: { type: Boolean, default: false }
   },
   emits: {
     changeStatus: (_id: string, _status: OrderStatus) => true,
@@ -176,7 +177,7 @@ const OrderDetailList = defineComponent({
             item.note ? h("p", { class: "mt-1 text-sm text-amber-700" }, `品項備註：${item.note}`) : null
           ]))),
           order.note ? h("p", { class: "mt-3 rounded-md bg-amber-50 p-2 text-sm text-amber-800" }, `訂單備註：${order.note}`) : null,
-          h("div", { class: "mt-4 flex flex-wrap justify-end gap-2" }, [
+          props.interactive ? h("div", { class: "mt-4 flex flex-wrap justify-end gap-2" }, [
             ...actions.map((action) => h("button", {
               key: action.status,
               class: `rounded-md px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${action.className}`,
@@ -189,7 +190,7 @@ const OrderDetailList = defineComponent({
               onClick: () => emit("cancel", order)
             }, "取消") : null,
             actions.length === 0 && !cancelable ? h("span", { class: "px-2 py-2 text-xs text-stone-500" }, "無可用操作") : null
-          ])
+          ]) : null
         ]);
       }));
     };
