@@ -12,6 +12,7 @@
     "test": "vitest run --pool=threads --poolOptions.threads.singleThread=true",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node dist/prisma/seed.js",
     "prisma:seed:dev": "tsx prisma/seed.ts"
   },

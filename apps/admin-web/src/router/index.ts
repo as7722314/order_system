@@ -9,7 +9,7 @@ import ProductsView from "../views/ProductsView.vue";
 import ReportsView from "../views/ReportsView.vue";
 
 export const router = createRouter({
-  history: createWebHistory("/admin/"),
+  history: createWebHistory(import.meta.env.VITE_ADMIN_BASE_PATH ?? "/admin/"),
   routes: [
     { path: "/login", component: LoginView },
     { path: "/", component: DashboardView },
@@ -26,4 +26,3 @@ router.beforeEach((to) => {
   if (to.path !== "/login" && !auth.isLoggedIn) return "/login";
   return true;
 });
-
