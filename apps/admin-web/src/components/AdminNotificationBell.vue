@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div ref="rootEl" class="relative">
     <button
       class="relative grid h-10 w-10 place-items-center rounded-full border border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
       title="新訂單通知"
@@ -22,7 +22,15 @@
           <p class="font-semibold text-stone-900">新訂單通知</p>
           <p class="text-xs" :class="connected ? 'text-emerald-700' : 'text-stone-500'">{{ connected ? "即時連線中" : "連線中斷，稍後會自動重連" }}</p>
         </div>
-        <button class="text-xs font-medium text-stone-500 hover:text-stone-900" type="button" @click="clearNotifications">清除</button>
+        <div class="flex items-center gap-2">
+          <button class="text-xs font-medium text-stone-500 hover:text-stone-900" type="button" @click="clearNotifications">清除</button>
+          <button class="rounded-full p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-900" title="關閉通知" type="button" @click="closeDropdown">
+            <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center justify-between border-b border-stone-100 px-4 py-2 text-sm">
@@ -101,6 +109,7 @@ type NotificationItem = NewOrderEvent & {
 };
 
 const auth = useAdminAuthStore();
+const rootEl = ref<HTMLElement | null>(null);
 const open = ref(false);
 const connected = ref(false);
 const unreadCount = ref(0);
@@ -160,6 +169,10 @@ function closePanel(): void {
   open.value = false;
 }
 
+function closeDropdown(): void {
+  open.value = false;
+}
+
 function closeModal(): void {
   modalOrder.value = null;
 }
@@ -215,6 +228,17 @@ async function playNotificationSound(): Promise<void> {
   }
 }
 
+function handleDocumentPointerDown(event: PointerEvent): void {
+  if (!open.value) return;
+  const target = event.target;
+  if (target instanceof Node && rootEl.value?.contains(target)) return;
+  closeDropdown();
+}
+
+function handleKeydown(event: KeyboardEvent): void {
+  if (event.key === "Escape") closeDropdown();
+}
+
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",
@@ -229,10 +253,14 @@ function formatTime(value: string): string {
 watch(token, connect, { immediate: true });
 onMounted(() => {
   document.addEventListener("pointerdown", unlockAudio, { once: true });
+  document.addEventListener("pointerdown", handleDocumentPointerDown);
+  document.addEventListener("keydown", handleKeydown);
 });
 onBeforeUnmount(() => {
   disconnect();
   document.removeEventListener("pointerdown", unlockAudio);
+  document.removeEventListener("pointerdown", handleDocumentPointerDown);
+  document.removeEventListener("keydown", handleKeydown);
   if (audioContext) void audioContext.close().catch(() => undefined);
 });
 </script>

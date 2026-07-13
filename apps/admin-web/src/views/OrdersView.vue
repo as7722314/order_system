@@ -9,6 +9,7 @@
       <thead class="bg-stone-100 text-stone-600">
         <tr>
           <th class="p-3">訂單編號</th>
+          <th class="p-3">建立時間</th>
           <th class="p-3">客戶</th>
           <th class="p-3">手機</th>
           <th class="p-3">狀態</th>
@@ -19,6 +20,7 @@
       <tbody>
         <tr v-for="order in orders" :key="order.id" class="border-b border-stone-100">
           <td class="p-3 font-medium">{{ order.orderNumber }}</td>
+          <td class="p-3 whitespace-nowrap text-stone-600">{{ formatDateTime(order.createdAt) }}</td>
           <td class="p-3">{{ order.customerName }}</td>
           <td class="p-3">{{ order.customerPhone }}</td>
           <td class="p-3"><StatusBadge :status="order.status" /></td>
@@ -58,11 +60,23 @@ import { onMounted, ref } from "vue";
 import { cancelOrder, listOrders, updateOrderStatus } from "../api/client";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderStatus } from "../types/admin";
-import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
+import { canCancel, statusActions } from "../utils/orderStatusActions";
 
 const orders = ref<Order[]>([]);
 const loading = ref(false);
 const error = ref("");
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(new Date(value));
+}
 
 async function load(): Promise<void> {
   loading.value = true;

@@ -51,8 +51,11 @@ const formatter = new Intl.DateTimeFormat("sv-SE", {
   day: "2-digit"
 });
 
-const timeFormatter = new Intl.DateTimeFormat("zh-TW", {
+const dateTimeFormatter = new Intl.DateTimeFormat("zh-TW", {
   timeZone: "Asia/Taipei",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
   hour12: false
@@ -76,8 +79,8 @@ function money(amount: number): string {
   return `NT$ ${amount.toLocaleString("zh-TW")}`;
 }
 
-function formatTime(value: string): string {
-  return timeFormatter.format(new Date(value));
+function formatDateTime(value: string): string {
+  return dateTimeFormatter.format(new Date(value));
 }
 
 function flavorText(item: OrderItem): string {
@@ -161,7 +164,7 @@ const OrderDetailList = defineComponent({
                 h("span", { class: "text-base font-semibold text-stone-900" }, order.orderNumber),
                 h(StatusBadge, { status: normalizeStatus(order.status) })
               ]),
-              h("p", { class: "mt-1 text-sm text-stone-500" }, `${formatTime(order.createdAt)} / ${order.customerName} / ${order.customerPhone}`)
+              h("p", { class: "mt-1 text-sm text-stone-500" }, `建立：${formatDateTime(order.createdAt)} / ${order.customerName} / ${order.customerPhone}`)
             ]),
             h("p", { class: "text-lg font-semibold text-stone-900" }, money(order.totalAmount))
           ]),
