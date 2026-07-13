@@ -159,7 +159,7 @@ export async function lookupOrder(req: Request, res: Response): Promise<Response
 }
 
 
-export async function createAdminBackfillOrder(req: Request, res: Response): Promise<Response> {
+export async function createAdminOnsiteOrder(req: Request, res: Response): Promise<Response> {
   const body = req.body as {
     customerName: string;
     customerPhone: string;
@@ -167,7 +167,6 @@ export async function createAdminBackfillOrder(req: Request, res: Response): Pro
     items: OrderLineInput[];
   };
   const productIds = [...new Set(body.items.map((item) => item.productId))];
-  const completedAt = new Date();
   const order = await prisma.$transaction(async (tx) => {
     const products = await tx.product.findMany({
       where: { id: { in: productIds } },
@@ -201,12 +200,11 @@ export async function createAdminBackfillOrder(req: Request, res: Response): Pro
         customerName: body.customerName,
         customerPhone: body.customerPhone,
         pickupTime: null,
-        status: OrderStatus.COMPLETED,
+        status: OrderStatus.PREPARING,
         subtotal: calculated.subtotal,
         flavorExtraAmount: calculated.flavorExtraAmount,
         totalAmount: calculated.totalAmount,
         note: body.note,
-        completedAt,
         items: {
           create: calculated.lines.map((line) => ({
             productId: line.productId,

@@ -15,7 +15,7 @@ export const createOrderSchema = z.object({
 });
 
 
-export const adminBackfillOrderSchema = z.object({
+export const adminOnsiteOrderSchema = z.object({
   customerName: z.string().trim().min(1).max(80),
   customerPhone: z.string().trim().min(1).max(30),
   note: z.string().max(500).optional(),

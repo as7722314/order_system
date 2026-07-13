@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, BackfillOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report } from "../types/admin";
+import type { ApiResponse, OnsiteOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report } from "../types/admin";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
@@ -72,8 +72,8 @@ export async function listOrders(params: OrderListParams = {}): Promise<Order[]>
   return response.data.data.items;
 }
 
-export async function createBackfillOrder(payload: BackfillOrderPayload): Promise<Order> {
-  const response = await api.post<ApiResponse<Order>>("/admin/orders/backfill", payload);
+export async function createOnsiteOrder(payload: OnsiteOrderPayload): Promise<Order> {
+  const response = await api.post<ApiResponse<Order>>("/admin/orders/onsite", payload);
   return response.data.data;
 }
 
