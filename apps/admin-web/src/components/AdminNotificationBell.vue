@@ -16,7 +16,7 @@
       <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white" :class="connected ? 'bg-emerald-500' : 'bg-stone-400'"></span>
     </button>
 
-    <div v-if="open" class="absolute left-full top-0 z-20 ml-2 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
+    <div v-if="open" class="fixed right-3 top-16 z-50 w-[calc(100vw-1.5rem)] max-w-[20rem] rounded-lg border border-stone-200 bg-white shadow-lg md:absolute md:left-full md:right-auto md:top-0 md:z-20 md:ml-2 md:w-80">
       <div class="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <div>
           <p class="font-semibold text-stone-900">新訂單通知</p>
@@ -116,8 +116,9 @@ const unreadCount = ref(0);
 const notifications = ref<NotificationItem[]>([]);
 const modalOrder = ref<NotificationItem | null>(null);
 const soundEnabled = ref(localStorage.getItem("admin_notification_sound") !== "false");
+const notificationSoundUrl = `${import.meta.env.BASE_URL}sounds/new-order.mp3`;
 let source: EventSource | null = null;
-let audioContext: AudioContext | null = null;
+let notificationAudio: HTMLAudioElement | null = null;
 
 const token = computed(() => auth.token);
 
@@ -194,35 +195,40 @@ function toggleSound(): void {
   if (soundEnabled.value) unlockAudio();
 }
 
-function getAudioContext(): AudioContext {
-  audioContext ??= new AudioContext();
-  return audioContext;
+function getNotificationAudio(): HTMLAudioElement {
+  if (!notificationAudio) {
+    notificationAudio = new Audio(notificationSoundUrl);
+    notificationAudio.preload = "auto";
+    notificationAudio.volume = 0.9;
+  }
+  return notificationAudio;
 }
 
 function unlockAudio(): void {
   if (!soundEnabled.value) return;
-  void getAudioContext().resume().catch(() => undefined);
+  const audio = getNotificationAudio();
+  const originalMuted = audio.muted;
+  audio.muted = true;
+  audio.play()
+    .then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = originalMuted;
+    })
+    .catch(() => {
+      audio.muted = originalMuted;
+    });
   document.removeEventListener("pointerdown", unlockAudio);
 }
 
 async function playNotificationSound(): Promise<void> {
   if (!soundEnabled.value) return;
   try {
-    const context = getAudioContext();
-    if (context.state === "suspended") await context.resume();
-    const now = context.currentTime;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, now);
-    oscillator.frequency.setValueAtTime(1175, now + 0.12);
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.4);
+    const audio = getNotificationAudio();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = false;
+    await audio.play();
   } catch {
     // Browsers can block audio until the user interacts with the page.
   }
@@ -252,6 +258,7 @@ function formatTime(value: string): string {
 
 watch(token, connect, { immediate: true });
 onMounted(() => {
+  getNotificationAudio().load();
   document.addEventListener("pointerdown", unlockAudio, { once: true });
   document.addEventListener("pointerdown", handleDocumentPointerDown);
   document.addEventListener("keydown", handleKeydown);
@@ -261,6 +268,7 @@ onBeforeUnmount(() => {
   document.removeEventListener("pointerdown", unlockAudio);
   document.removeEventListener("pointerdown", handleDocumentPointerDown);
   document.removeEventListener("keydown", handleKeydown);
-  if (audioContext) void audioContext.close().catch(() => undefined);
+  notificationAudio?.pause();
+  notificationAudio = null;
 });
 </script>
