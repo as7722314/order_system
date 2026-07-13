@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci && npm run build --workspace @line-order/api
+    buildCommand: npm ci --include=dev && npm run build --workspace @line-order/api
     startCommand: npm run prisma:deploy --workspace @line-order/api && npm run prisma:seed --workspace @line-order/api && npm run start --workspace @line-order/api
     healthCheckPath: /api/health
     envVars:
@@ -48,7 +48,7 @@ services:
   - type: web
     name: line-order-system-customer
     runtime: static
-    buildCommand: npm ci && npm run build --workspace @line-order/customer-web
+    buildCommand: npm ci --include=dev && npm run build --workspace @line-order/customer-web
     staticPublishPath: apps/customer-web/dist
     envVars:
       - key: VITE_API_BASE_URL
@@ -63,7 +63,7 @@ services:
   - type: web
     name: line-order-system-admin
     runtime: static
-    buildCommand: npm ci && npm run build --workspace @line-order/admin-web
+    buildCommand: npm ci --include=dev && npm run build --workspace @line-order/admin-web
     staticPublishPath: apps/admin-web/dist
     envVars:
       - key: VITE_API_BASE_URL

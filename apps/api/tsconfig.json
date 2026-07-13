@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src", "prisma", "test"]
+  "include": [
+    "src",
+    "prisma"
+  ]
 }
