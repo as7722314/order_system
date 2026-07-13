@@ -16,7 +16,7 @@ import {
   updateProductStatus
 } from "../controllers/adminCatalogController.js";
 import { streamAdminOrderEvents } from "../controllers/adminOrderEventController.js";
-import { cancelOrder, getAdminOrder, listAdminOrders, updateOrderStatus } from "../controllers/orderController.js";
+import { cancelOrder, deleteOrder, getAdminOrder, listAdminOrders, restoreOrder, updateOrderStatus } from "../controllers/orderController.js";
 import { createExpense, deleteExpense, listExpenses, updateExpense } from "../controllers/expenseController.js";
 import { dailyReport, monthlyReport } from "../controllers/reportController.js";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
@@ -33,6 +33,7 @@ import {
 import {
   adminOrderQuerySchema,
   cancelOrderSchema,
+  deleteOrderSchema,
   updateOrderStatusSchema
 } from "../validators/orderValidators.js";
 import {
@@ -69,6 +70,8 @@ adminRoutes.get("/admin/orders", validateQuery(adminOrderQuerySchema), asyncHand
 adminRoutes.get("/admin/orders/:id", asyncHandler(getAdminOrder));
 adminRoutes.patch("/admin/orders/:id/status", validateBody(updateOrderStatusSchema), asyncHandler(updateOrderStatus));
 adminRoutes.post("/admin/orders/:id/cancel", validateBody(cancelOrderSchema), asyncHandler(cancelOrder));
+adminRoutes.delete("/admin/orders/:id", validateBody(deleteOrderSchema), asyncHandler(deleteOrder));
+adminRoutes.post("/admin/orders/:id/restore", asyncHandler(restoreOrder));
 
 adminRoutes.get("/admin/expenses", validateQuery(expenseQuerySchema), asyncHandler(listExpenses));
 adminRoutes.post("/admin/expenses", validateBody(expenseSchema), asyncHandler(createExpense));

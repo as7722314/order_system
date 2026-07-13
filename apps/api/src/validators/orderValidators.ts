@@ -27,10 +27,15 @@ export const cancelOrderSchema = z.object({
   reason: z.string().min(1).max(300)
 });
 
+export const deleteOrderSchema = z.object({
+  reason: z.string().max(300).optional()
+});
+
 export const adminOrderQuerySchema = z.object({
   status: z.nativeEnum(OrderStatus).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   keyword: z.string().optional(),
+  deleted: z.enum(["active", "deleted", "all"]).default("active"),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20)
 });

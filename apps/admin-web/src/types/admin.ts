@@ -66,6 +66,8 @@ export type Order = {
   status: OrderStatus | Lowercase<OrderStatus>;
   totalAmount: number;
   note?: string | null;
+  deletedReason?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
   items?: OrderItem[];
 };

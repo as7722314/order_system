@@ -119,10 +119,11 @@ export async function createOrder(req: Request, res: Response): Promise<Response
   });
   return ok(res, { orderNumber: result.orderNumber, status: result.status, totalAmount: result.totalAmount }, 201);
 }
+
 export async function listMyOrders(req: Request, res: Response): Promise<Response> {
   if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
   const orders = await prisma.order.findMany({
-    where: { userId: req.user.id },
+    where: { userId: req.user.id, deletedAt: null },
     include: orderInclude,
     orderBy: { createdAt: "desc" }
   });
@@ -132,7 +133,7 @@ export async function listMyOrders(req: Request, res: Response): Promise<Respons
 export async function getMyOrderByNumber(req: Request, res: Response): Promise<Response> {
   if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
   const order = await prisma.order.findFirst({
-    where: { orderNumber: req.params.orderNumber, userId: req.user.id },
+    where: { orderNumber: req.params.orderNumber, userId: req.user.id, deletedAt: null },
     include: orderInclude
   });
   if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
@@ -142,7 +143,7 @@ export async function getMyOrderByNumber(req: Request, res: Response): Promise<R
 export async function lookupOrder(req: Request, res: Response): Promise<Response> {
   const { orderNumber, phoneLast3 } = req.body as { orderNumber: string; phoneLast3: string };
   const order = await prisma.order.findUnique({ where: { orderNumber }, include: orderInclude });
-  if (!order || !order.customerPhone.endsWith(phoneLast3)) {
+  if (!order || order.deletedAt || !order.customerPhone.endsWith(phoneLast3)) {
     throw new AppError("RESOURCE_NOT_FOUND", "查無訂單", 404);
   }
   return ok(res, {
@@ -162,16 +163,20 @@ export async function listAdminOrders(req: Request, res: Response): Promise<Resp
     status?: OrderStatusType;
     date?: string;
     keyword?: string;
+    deleted?: "active" | "deleted" | "all";
     page: number;
     pageSize: number;
   };
   const range = query.date ? taipeiDayRange(query.date) : undefined;
+  const deletedAt = query.deleted === "deleted" ? { not: null } : query.deleted === "all" ? undefined : null;
   const where: Prisma.OrderWhereInput = {
     status: query.status,
     createdAt: range ? { gte: range.start, lt: range.end } : undefined,
+    deletedAt,
     OR: query.keyword ? [
       { orderNumber: { contains: query.keyword, mode: "insensitive" } },
-      { customerName: { contains: query.keyword, mode: "insensitive" } }
+      { customerName: { contains: query.keyword, mode: "insensitive" } },
+      { customerPhone: { contains: query.keyword, mode: "insensitive" } }
     ] : undefined
   };
   const [total, orders] = await Promise.all([
@@ -197,6 +202,7 @@ export async function updateOrderStatus(req: Request, res: Response): Promise<Re
   const { status } = req.body as { status: OrderStatusType };
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
+  if (order.deletedAt) throw new AppError("ORDER_DELETED", "已刪除訂單不可修改", 409);
   ensureStatusTransition(order.status, status);
   const updated = await prisma.order.update({
     where: { id: order.id },
@@ -213,6 +219,7 @@ export async function cancelOrder(req: Request, res: Response): Promise<Response
   const { reason } = req.body as { reason: string };
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
+  if (order.deletedAt) throw new AppError("ORDER_DELETED", "已刪除訂單不可修改", 409);
   ensureStatusTransition(order.status, OrderStatus.CANCELLED);
   const updated = await prisma.order.update({
     where: { id: order.id },
@@ -221,6 +228,38 @@ export async function cancelOrder(req: Request, res: Response): Promise<Response
       cancelReason: reason,
       cancelledAt: new Date(),
       cancelledById: req.user.id
+    }
+  });
+  return ok(res, updated);
+}
+
+export async function deleteOrder(req: Request, res: Response): Promise<Response> {
+  if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
+  const { reason } = req.body as { reason?: string };
+  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+  if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
+  if (order.deletedAt) throw new AppError("ORDER_ALREADY_DELETED", "訂單已刪除", 409);
+  const updated = await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      deletedAt: new Date(),
+      deletedById: req.user.id,
+      deletedReason: reason?.trim() || null
+    }
+  });
+  return ok(res, updated);
+}
+
+export async function restoreOrder(req: Request, res: Response): Promise<Response> {
+  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+  if (!order) throw new AppError("RESOURCE_NOT_FOUND", "訂單不存在", 404);
+  if (!order.deletedAt) throw new AppError("ORDER_NOT_DELETED", "訂單尚未刪除", 409);
+  const updated = await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      deletedAt: null,
+      deletedById: null,
+      deletedReason: null
     }
   });
   return ok(res, updated);

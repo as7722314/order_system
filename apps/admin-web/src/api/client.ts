@@ -62,6 +62,7 @@ export type OrderListParams = {
   status?: OrderStatus;
   date?: string;
   keyword?: string;
+  deleted?: "active" | "deleted" | "all";
   page?: number;
   pageSize?: number;
 };
@@ -77,6 +78,14 @@ export async function updateOrderStatus(id: string, status: string): Promise<voi
 
 export async function cancelOrder(id: string, reason: string): Promise<void> {
   await api.post(`/admin/orders/${id}/cancel`, { reason });
+}
+
+export async function deleteOrder(id: string, reason?: string): Promise<void> {
+  await api.delete(`/admin/orders/${id}`, { data: { reason } });
+}
+
+export async function restoreOrder(id: string): Promise<void> {
+  await api.post(`/admin/orders/${id}/restore`);
 }
 
 export async function listExpenses(): Promise<Expense[]> {

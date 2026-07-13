@@ -8,6 +8,7 @@ export async function getDailyReport(date: string) {
     prisma.order.aggregate({
       where: {
         status: OrderStatus.COMPLETED,
+        deletedAt: null,
         completedAt: { gte: range.start, lt: range.end }
       },
       _count: { _all: true },
@@ -38,6 +39,7 @@ export async function getMonthlyReport(month: string) {
     prisma.order.findMany({
       where: {
         status: OrderStatus.COMPLETED,
+        deletedAt: null,
         completedAt: { gte: range.start, lt: range.end }
       },
       select: { totalAmount: true, completedAt: true }
@@ -82,4 +84,3 @@ export async function getMonthlyReport(month: string) {
     })
   };
 }
-
