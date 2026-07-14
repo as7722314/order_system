@@ -75,3 +75,8 @@ export type OrderSummary = {
   status: OrderStatus;
   totalAmount: number;
 };
+
+export type StoreStatus = {
+  isOpen: boolean;
+  updatedAt: string;
+};

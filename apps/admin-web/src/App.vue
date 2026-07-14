@@ -52,11 +52,13 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import AdminInstallButton from "./components/AdminInstallButton.vue";
 import AdminNotificationBell from "./components/AdminNotificationBell.vue";
 import { useAdminAuthStore } from "./stores/adminAuthStore";
 
 const auth = useAdminAuthStore();
+const router = useRouter();
 const mobileMenuOpen = ref(false);
 const isDesktop = ref(window.matchMedia("(min-width: 768px)").matches);
 let desktopMediaQuery: MediaQueryList | null = null;
@@ -77,6 +79,7 @@ function updateDesktopState(event?: MediaQueryListEvent): void {
 function logout(): void {
   mobileMenuOpen.value = false;
   auth.logout();
+  void router.push("/login");
 }
 
 onMounted(() => {

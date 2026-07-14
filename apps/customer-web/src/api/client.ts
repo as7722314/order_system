@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, Category, CustomerOrder, OrderSummary, Product } from "../types/order";
+import type { ApiResponse, Category, CustomerOrder, OrderSummary, Product, StoreStatus } from "../types/order";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
@@ -12,6 +12,11 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export async function fetchStoreStatus(): Promise<StoreStatus> {
+  const response = await api.get<ApiResponse<StoreStatus>>("/store/status");
+  return response.data.data;
+}
 
 export async function fetchCategories(): Promise<Category[]> {
   const response = await api.get<ApiResponse<Category[]>>("/categories");

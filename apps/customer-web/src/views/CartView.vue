@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { createOrder } from "../api/client";
+import { createOrder, fetchStoreStatus } from "../api/client";
 import { useAuthStore } from "../stores/authStore";
 import { useCartStore } from "../stores/cartStore";
 
@@ -87,6 +87,12 @@ async function submit(): Promise<void> {
   submitting.value = true;
   error.value = "";
   try {
+    const storeStatus = await fetchStoreStatus();
+    if (!storeStatus.isOpen) {
+      window.dispatchEvent(new CustomEvent("store-status-closed", { detail: storeStatus }));
+      error.value = "目前非營業時間，暫停點餐。";
+      return;
+    }
     const result = await createOrder({
       customerPhone: customerPhone.value,
       note: note.value || undefined,

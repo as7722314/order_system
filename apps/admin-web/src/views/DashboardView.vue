@@ -10,6 +10,21 @@
       </button>
     </div>
 
+    <section class="mt-5 rounded-lg border bg-white p-5" :class="storeStatus?.isOpen ? 'border-emerald-200' : 'border-red-200'">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium text-stone-500">線上點餐狀態</p>
+          <h2 class="mt-1 text-2xl font-semibold" :class="storeStatus?.isOpen ? 'text-emerald-700' : 'text-red-700'">
+            {{ storeStatus?.isOpen ? "營業中" : "暫停點餐" }}
+          </h2>
+          <p v-if="storeStatus" class="mt-1 text-sm text-stone-500">最後更新：{{ formatDateTime(storeStatus.updatedAt) }}</p>
+        </div>
+        <button class="rounded-md px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :class="storeStatus?.isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'" :disabled="loading || savingStoreStatus || !storeStatus" type="button" @click="toggleStoreStatus">
+          {{ savingStoreStatus ? "更新中" : storeStatus?.isOpen ? "暫停點餐" : "開始營業" }}
+        </button>
+      </div>
+    </section>
+
     <div class="mt-5 grid gap-4 md:grid-cols-4">
       <section v-for="card in cards" :key="card.label" class="rounded-lg border border-stone-200 bg-white p-5">
         <p class="text-sm text-stone-500">{{ card.label }}</p>
@@ -39,9 +54,9 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, ref } from "vue";
-import { cancelOrder, dailyReport, listOrders, updateOrderStatus } from "../api/client";
+import { cancelOrder, dailyReport, getStoreStatus, listOrders, updateOrderStatus, updateStoreStatus } from "../api/client";
 import StatusBadge from "../components/StatusBadge.vue";
-import type { Order, OrderItem, OrderStatus } from "../types/admin";
+import type { Order, OrderItem, OrderStatus, StoreStatus } from "../types/admin";
 import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
 
 const formatter = new Intl.DateTimeFormat("sv-SE", {
@@ -65,7 +80,9 @@ const today = formatter.format(new Date());
 const todayOrders = ref<Order[]>([]);
 const pendingOrders = ref<Order[]>([]);
 const report = ref({ orderCount: 0, totalRevenue: 0, totalExpense: 0, netProfit: 0 });
+const storeStatus = ref<StoreStatus | null>(null);
 const loading = ref(false);
+const savingStoreStatus = ref(false);
 const error = ref("");
 
 const cards = computed(() => [
@@ -92,18 +109,33 @@ async function load(): Promise<void> {
   loading.value = true;
   error.value = "";
   try {
-    const [daily, todayItems, pendingItems] = await Promise.all([
+    const [daily, todayItems, pendingItems, currentStoreStatus] = await Promise.all([
       dailyReport(today),
       listOrders({ date: today, pageSize: 100 }),
-      listOrders({ status: "PENDING", pageSize: 100 })
+      listOrders({ status: "PENDING", pageSize: 100 }),
+      getStoreStatus()
     ]);
     report.value = daily;
     todayOrders.value = todayItems;
     pendingOrders.value = pendingItems;
+    storeStatus.value = currentStoreStatus;
   } catch {
     error.value = "讀取儀表板資料失敗";
   } finally {
     loading.value = false;
+  }
+}
+
+async function toggleStoreStatus(): Promise<void> {
+  if (!storeStatus.value || savingStoreStatus.value) return;
+  savingStoreStatus.value = true;
+  error.value = "";
+  try {
+    storeStatus.value = await updateStoreStatus(!storeStatus.value.isOpen);
+  } catch {
+    error.value = "更新營業狀態失敗";
+  } finally {
+    savingStoreStatus.value = false;
   }
 }
 

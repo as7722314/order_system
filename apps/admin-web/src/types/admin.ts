@@ -96,3 +96,8 @@ export type Report = {
   totalExpense: number;
   netProfit: number;
 };
+
+export type StoreStatus = {
+  isOpen: boolean;
+  updatedAt: string;
+};

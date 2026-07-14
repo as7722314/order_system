@@ -19,6 +19,7 @@ import { streamAdminOrderEvents } from "../controllers/adminOrderEventController
 import { cancelOrder, createAdminOnsiteOrder, deleteOrder, getAdminOrder, listAdminOrders, restoreOrder, updateOrderStatus } from "../controllers/orderController.js";
 import { createExpense, deleteExpense, listExpenses, updateExpense } from "../controllers/expenseController.js";
 import { dailyReport, monthlyReport } from "../controllers/reportController.js";
+import { getAdminStoreStatus, updateAdminStoreStatus } from "../controllers/storeSettingController.js";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { validateBody, validateQuery } from "../middlewares/validate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -43,12 +44,16 @@ import {
   expenseSchema,
   monthlyReportQuerySchema
 } from "../validators/expenseValidators.js";
+import { storeStatusSchema } from "../validators/storeSettingValidators.js";
 
 export const adminRoutes = Router();
 
 adminRoutes.get("/admin/order-events", streamAdminOrderEvents);
 
 adminRoutes.use(requireAuth, requireRole(UserRole.ADMIN));
+
+adminRoutes.get("/admin/store/status", asyncHandler(getAdminStoreStatus));
+adminRoutes.patch("/admin/store/status", validateBody(storeStatusSchema), asyncHandler(updateAdminStoreStatus));
 
 adminRoutes.get("/admin/categories", asyncHandler(listCategories));
 adminRoutes.post("/admin/categories", validateBody(categorySchema), asyncHandler(createCategory));

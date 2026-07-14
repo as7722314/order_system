@@ -185,3 +185,11 @@ model Expense {
   @@index([deletedAt])
   @@map("expenses")
 }
+model StoreSetting {
+  id        String   @id
+  isOpen    Boolean  @default(true) @map("is_open")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("store_settings")
+}

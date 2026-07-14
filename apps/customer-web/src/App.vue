@@ -30,19 +30,50 @@
     </main>
 
     <RouterView v-else />
+
+    <div v-if="lineBrowserAllowed && storeStatus && !storeStatus.isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
+      <section class="w-full max-w-md rounded-2xl border-4 border-brand-100 bg-white p-6 text-center shadow-2xl">
+        <h2 class="text-[48px] font-black leading-tight text-brand-700">目前非營業時間</h2>
+        <p class="mt-5 text-[30px] font-black leading-snug text-griddle-800">現在暫停線上點餐，恢復營業後此提示會自動關閉。</p>
+        <button class="mt-7 w-full rounded-lg bg-scallion-600 py-5 text-[32px] font-black leading-tight text-white disabled:opacity-60" :disabled="checkingStoreStatus" type="button" @click="loadStoreStatus">
+          {{ checkingStoreStatus ? "檢查中..." : "重新檢查" }}
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { fetchStoreStatus } from "./api/client";
 import { useAuthStore } from "./stores/authStore";
 import { useCartStore } from "./stores/cartStore";
+import type { StoreStatus } from "./types/order";
 
 const cart = useCartStore();
 const auth = useAuthStore();
 const loggingIn = ref(false);
 const error = ref("");
 const lineBrowserAllowed = ref(/Line\//i.test(window.navigator.userAgent));
+const storeStatus = ref<StoreStatus | null>(null);
+const checkingStoreStatus = ref(false);
+let storeStatusTimer: number | undefined;
+
+async function loadStoreStatus(): Promise<void> {
+  if (checkingStoreStatus.value) return;
+  checkingStoreStatus.value = true;
+  try {
+    storeStatus.value = await fetchStoreStatus();
+  } catch {
+    storeStatus.value = { isOpen: false, updatedAt: new Date().toISOString() };
+  } finally {
+    checkingStoreStatus.value = false;
+  }
+}
+
+function handleStoreClosed(event: Event): void {
+  storeStatus.value = (event as CustomEvent<StoreStatus>).detail ?? { isOpen: false, updatedAt: new Date().toISOString() };
+}
 
 async function login(): Promise<void> {
   if (loggingIn.value) return;
@@ -62,6 +93,14 @@ onMounted(() => {
     auth.logout();
     return;
   }
+  window.addEventListener("store-status-closed", handleStoreClosed);
+  void loadStoreStatus();
+  storeStatusTimer = window.setInterval(() => void loadStoreStatus(), 10000);
   if (!auth.token) void login();
+});
+
+onBeforeUnmount(() => {
+  if (storeStatusTimer) window.clearInterval(storeStatusTimer);
+  window.removeEventListener("store-status-closed", handleStoreClosed);
 });
 </script>

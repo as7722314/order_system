@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, OnsiteOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report } from "../types/admin";
+import type { ApiResponse, OnsiteOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report, StoreStatus } from "../types/admin";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
@@ -14,6 +14,16 @@ api.interceptors.request.use((config) => {
 export async function login(account: string, password: string): Promise<string> {
   const response = await api.post<ApiResponse<{ accessToken: string }>>("/admin/auth/login", { account, password });
   return response.data.data.accessToken;
+}
+
+export async function getStoreStatus(): Promise<StoreStatus> {
+  const response = await api.get<ApiResponse<StoreStatus>>("/admin/store/status");
+  return response.data.data;
+}
+
+export async function updateStoreStatus(isOpen: boolean): Promise<StoreStatus> {
+  const response = await api.patch<ApiResponse<StoreStatus>>("/admin/store/status", { isOpen });
+  return response.data.data;
 }
 
 export async function listCategories(): Promise<Category[]> {

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type { OrderStatus as OrderStatusType, Prisma } from "@prisma/client";
 import { broadcastNewOrderEvent } from "../services/adminOrderEventService.js";
 import { notifyNewOrder } from "../services/lineOrderNotificationService.js";
+import { getStoreStatus } from "../services/storeSettingService.js";
 import { calculateOrder, ensureStatusTransition, type CatalogProduct, type OrderLineInput } from "../services/orderRules.js";
 import { ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
@@ -18,6 +19,8 @@ const orderInclude = {
 
 export async function createOrder(req: Request, res: Response): Promise<Response> {
   if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
+  const storeStatus = await getStoreStatus();
+  if (!storeStatus.isOpen) throw new AppError("STORE_CLOSED", "目前非營業時間，暫停點餐", 409);
   const body = req.body as {
     customerPhone: string;
     note?: string;
