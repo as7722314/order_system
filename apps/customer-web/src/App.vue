@@ -31,6 +31,17 @@
 
     <RouterView v-else />
 
+    <div v-if="lineBrowserAllowed && authExpiredOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-4 py-6">
+      <section class="w-full max-w-md rounded-2xl border-4 border-brand-100 bg-white p-6 text-center shadow-2xl">
+        <h2 class="text-[48px] font-black leading-tight text-brand-700">登入已過期</h2>
+        <p class="mt-5 text-[30px] font-black leading-snug text-griddle-800">系統偵測到登入狀態失效，請重新使用 LINE 登入後繼續點餐。</p>
+        <button class="mt-7 w-full rounded-lg bg-scallion-600 py-5 text-[32px] font-black leading-tight text-white disabled:opacity-60" :disabled="reauthenticating" type="button" @click="relogin">
+          {{ reauthenticating ? "登入中..." : "重新登入" }}
+        </button>
+        <p v-if="auth.loginError || error" class="mt-4 text-[24px] font-bold leading-snug text-red-700">{{ auth.loginError || error }}</p>
+      </section>
+    </div>
+
     <div v-if="lineBrowserAllowed && storeStatus && !storeStatus.isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
       <section class="w-full max-w-md rounded-2xl border-4 border-brand-100 bg-white p-6 text-center shadow-2xl">
         <h2 class="text-[48px] font-black leading-tight text-brand-700">目前非營業時間</h2>
@@ -57,6 +68,8 @@ const error = ref("");
 const lineBrowserAllowed = ref(/Line\//i.test(window.navigator.userAgent));
 const storeStatus = ref<StoreStatus | null>(null);
 const checkingStoreStatus = ref(false);
+const authExpiredOpen = ref(false);
+const reauthenticating = ref(false);
 let storeStatusTimer: number | undefined;
 
 async function loadStoreStatus(): Promise<void> {
@@ -73,6 +86,27 @@ async function loadStoreStatus(): Promise<void> {
 
 function handleStoreClosed(event: Event): void {
   storeStatus.value = (event as CustomEvent<StoreStatus>).detail ?? { isOpen: false, updatedAt: new Date().toISOString() };
+}
+
+function handleAuthExpired(): void {
+  auth.logout();
+  authExpiredOpen.value = true;
+  error.value = "";
+}
+
+async function relogin(): Promise<void> {
+  if (reauthenticating.value) return;
+  reauthenticating.value = true;
+  error.value = "";
+  try {
+    auth.logout();
+    await auth.loginWithLine();
+    authExpiredOpen.value = false;
+  } catch {
+    error.value = auth.loginError || "LINE 重新登入失敗";
+  } finally {
+    reauthenticating.value = false;
+  }
 }
 
 async function login(): Promise<void> {
@@ -94,6 +128,7 @@ onMounted(() => {
     return;
   }
   window.addEventListener("store-status-closed", handleStoreClosed);
+  window.addEventListener("customer-auth-expired", handleAuthExpired);
   void loadStoreStatus();
   storeStatusTimer = window.setInterval(() => void loadStoreStatus(), 10000);
   if (!auth.token) void login();
@@ -102,5 +137,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (storeStatusTimer) window.clearInterval(storeStatusTimer);
   window.removeEventListener("store-status-closed", handleStoreClosed);
+  window.removeEventListener("customer-auth-expired", handleAuthExpired);
 });
 </script>

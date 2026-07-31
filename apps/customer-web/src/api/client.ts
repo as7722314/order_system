@@ -5,6 +5,8 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
 });
 
+let authExpiredNotified = false;
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("customer_token");
   if (token) {
@@ -13,6 +15,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+
+api.interceptors.response.use(
+  (response) => {
+    authExpiredNotified = false;
+    return response;
+  },
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !error.config?.url?.includes("/auth/line")) {
+      localStorage.removeItem("customer_token");
+      localStorage.removeItem("customer_name");
+      if (!authExpiredNotified) {
+        authExpiredNotified = true;
+        window.dispatchEvent(new CustomEvent("customer-auth-expired"));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 export async function fetchStoreStatus(): Promise<StoreStatus> {
   const response = await api.get<ApiResponse<StoreStatus>>("/store/status");
   return response.data.data;
