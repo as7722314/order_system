@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { Prisma } from "@prisma/client";
 import { ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
 import { prisma } from "../utils/prisma.js";
@@ -7,17 +8,27 @@ function toExpenseDate(date: string): Date {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
+function buildExpenseDateFilter(query: { date?: string; startDate?: string; endDate?: string }): Date | Prisma.DateTimeFilter | undefined {
+  if (query.date) return toExpenseDate(query.date);
+  if (!query.startDate && !query.endDate) return undefined;
+  return {
+    gte: query.startDate ? toExpenseDate(query.startDate) : undefined,
+    lte: query.endDate ? toExpenseDate(query.endDate) : undefined
+  };
+}
+
 export async function listExpenses(req: Request, res: Response): Promise<Response> {
-  const query = req.query as unknown as { date?: string; page: number; pageSize: number };
-  const where = {
-    expenseDate: query.date ? toExpenseDate(query.date) : undefined,
+  const query = req.query as unknown as { date?: string; startDate?: string; endDate?: string; category?: string; page: number; pageSize: number };
+  const where: Prisma.ExpenseWhereInput = {
+    expenseDate: buildExpenseDateFilter(query),
+    category: query.category,
     deletedAt: null
   };
   const [total, items] = await Promise.all([
     prisma.expense.count({ where }),
     prisma.expense.findMany({
       where,
-      orderBy: { expenseDate: "desc" },
+      orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize
     })
@@ -27,10 +38,11 @@ export async function listExpenses(req: Request, res: Response): Promise<Respons
 
 export async function createExpense(req: Request, res: Response): Promise<Response> {
   if (!req.user) throw new AppError("UNAUTHORIZED", "需要登入", 401);
-  const body = req.body as { expenseDate: string; name: string; amount: number; note?: string };
+  const body = req.body as { expenseDate: string; category: string; name: string; amount: number; note?: string };
   const expense = await prisma.expense.create({
     data: {
       expenseDate: toExpenseDate(body.expenseDate),
+      category: body.category,
       name: body.name,
       amount: body.amount,
       note: body.note,
@@ -41,11 +53,12 @@ export async function createExpense(req: Request, res: Response): Promise<Respon
 }
 
 export async function updateExpense(req: Request, res: Response): Promise<Response> {
-  const body = req.body as { expenseDate: string; name: string; amount: number; note?: string };
+  const body = req.body as { expenseDate: string; category: string; name: string; amount: number; note?: string };
   const expense = await prisma.expense.update({
     where: { id: req.params.id },
     data: {
       expenseDate: toExpenseDate(body.expenseDate),
+      category: body.category,
       name: body.name,
       amount: body.amount,
       note: body.note
@@ -61,4 +74,3 @@ export async function deleteExpense(req: Request, res: Response): Promise<Respon
   });
   return ok(res, expense);
 }
-

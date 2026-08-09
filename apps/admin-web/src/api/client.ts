@@ -103,8 +103,16 @@ export async function restoreOrder(id: string): Promise<void> {
   await api.post(`/admin/orders/${id}/restore`);
 }
 
-export async function listExpenses(): Promise<Expense[]> {
-  const response = await api.get<ApiResponse<{ items: Expense[] }>>("/admin/expenses");
+export type ExpenseListParams = {
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export async function listExpenses(params: ExpenseListParams = {}): Promise<Expense[]> {
+  const response = await api.get<ApiResponse<{ items: Expense[] }>>("/admin/expenses", { params });
   return response.data.data.items;
 }
 

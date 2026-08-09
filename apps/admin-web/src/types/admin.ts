@@ -85,6 +85,7 @@ export type OnsiteOrderPayload = {
 export type Expense = {
   id: string;
   expenseDate: string;
+  category: string;
   name: string;
   amount: number;
   note?: string | null;

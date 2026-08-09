@@ -172,6 +172,7 @@ model Expense {
   id          String    @id @default(uuid())
   expenseDate DateTime  @map("expense_date") @db.Date
   name        String
+  category    String    @default("日常消耗")
   amount      Int
   note        String?
   createdById String    @map("created_by_id")
@@ -182,6 +183,7 @@ model Expense {
   createdBy User @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
 
   @@index([expenseDate])
+  @@index([category])
   @@index([deletedAt])
   @@map("expenses")
 }
