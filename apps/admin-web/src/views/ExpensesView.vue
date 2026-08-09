@@ -5,9 +5,14 @@
         <h1 class="text-2xl font-semibold">成本</h1>
         <p class="mt-1 text-sm text-stone-500">可依日期區間與分類查詢成本資料。</p>
       </div>
-      <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" type="button" @click="load">
-        {{ loading ? "讀取中" : "重新整理" }}
-      </button>
+      <div class="flex flex-wrap gap-2">
+        <button class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white" type="button" @click="openCreateModal">
+          新增成本
+        </button>
+        <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" type="button" @click="load">
+          {{ loading ? "讀取中" : "重新整理" }}
+        </button>
+      </div>
     </div>
 
     <section class="mt-5 rounded-lg border border-stone-200 bg-white p-4">
@@ -33,35 +38,6 @@
       </form>
     </section>
 
-    <form class="mt-5 grid gap-3 rounded-lg border border-stone-200 bg-white p-4 md:grid-cols-6" @submit.prevent="submit">
-      <label class="grid gap-1 text-sm font-medium text-stone-700">
-        日期
-        <input v-model="form.expenseDate" class="rounded-md border border-stone-300 p-3 font-normal" type="date" />
-      </label>
-      <label class="grid gap-1 text-sm font-medium text-stone-700">
-        分類
-        <select v-model="form.category" class="rounded-md border border-stone-300 p-3 font-normal">
-          <option v-for="category in expenseCategories" :key="category" :value="category">{{ category }}</option>
-        </select>
-      </label>
-      <label class="grid gap-1 text-sm font-medium text-stone-700">
-        名稱
-        <input v-model.trim="form.name" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="名稱" />
-      </label>
-      <label class="grid gap-1 text-sm font-medium text-stone-700">
-        金額
-        <input v-model.number="form.amount" class="rounded-md border border-stone-300 p-3 font-normal" min="1" placeholder="金額" type="number" />
-      </label>
-      <label class="grid gap-1 text-sm font-medium text-stone-700 md:col-span-2">
-        備註
-        <input v-model.trim="form.note" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="備註" />
-      </label>
-      <div class="flex gap-2 md:col-span-6">
-        <button class="rounded-md bg-accent px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="saving" type="submit">{{ form.id ? "儲存變更" : "新增成本" }}</button>
-        <button v-if="form.id" class="rounded-md border border-stone-300 px-4 py-3 font-medium text-stone-700" :disabled="saving" type="button" @click="resetForm">取消編輯</button>
-      </div>
-    </form>
-
     <p v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
 
     <div class="mt-5 overflow-x-auto rounded-lg bg-white">
@@ -83,8 +59,8 @@
             <td class="p-3 font-medium text-stone-900">{{ item.name }}</td>
             <td class="p-3 whitespace-nowrap">NT$ {{ item.amount.toLocaleString("zh-TW") }}</td>
             <td class="p-3 text-stone-600">{{ item.note || "-" }}</td>
-            <td class="p-3 text-right">
-              <button class="rounded-md border border-stone-300 px-3 py-2" type="button" @click="edit(item)">編輯</button>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button class="rounded-md border border-stone-300 px-3 py-2" type="button" @click="openEditModal(item)">編輯</button>
               <button class="ml-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-red-700" type="button" @click="remove(item.id)">刪除</button>
             </td>
           </tr>
@@ -94,6 +70,52 @@
         </tbody>
       </table>
     </div>
+
+    <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+      <form class="w-full max-w-2xl rounded-lg bg-white p-5 shadow-xl" @submit.prevent="submit">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-semibold text-stone-900">{{ form.id ? "編輯成本" : "新增成本" }}</h2>
+            <p class="mt-1 text-sm text-stone-500">填寫日期、分類、名稱與金額後儲存。</p>
+          </div>
+          <button class="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700" :disabled="saving" type="button" @click="closeModal">
+            關閉
+          </button>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-2">
+          <label class="grid gap-1 text-sm font-medium text-stone-700">
+            日期
+            <input v-model="form.expenseDate" class="rounded-md border border-stone-300 p-3 font-normal" type="date" />
+          </label>
+          <label class="grid gap-1 text-sm font-medium text-stone-700">
+            分類
+            <select v-model="form.category" class="rounded-md border border-stone-300 p-3 font-normal">
+              <option v-for="category in expenseCategories" :key="category" :value="category">{{ category }}</option>
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm font-medium text-stone-700">
+            名稱
+            <input v-model.trim="form.name" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="名稱" />
+          </label>
+          <label class="grid gap-1 text-sm font-medium text-stone-700">
+            金額
+            <input v-model.number="form.amount" class="rounded-md border border-stone-300 p-3 font-normal" min="1" placeholder="金額" type="number" />
+          </label>
+          <label class="grid gap-1 text-sm font-medium text-stone-700 md:col-span-2">
+            備註
+            <textarea v-model.trim="form.note" class="min-h-24 rounded-md border border-stone-300 p-3 font-normal" placeholder="備註" />
+          </label>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button class="rounded-md border border-stone-300 px-4 py-3 font-medium text-stone-700" :disabled="saving" type="button" @click="closeModal">取消</button>
+          <button class="rounded-md bg-accent px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="saving" type="submit">
+            {{ saving ? "儲存中" : "儲存" }}
+          </button>
+        </div>
+      </form>
+    </div>
   </main>
 </template>
 
@@ -102,12 +124,13 @@ import { onMounted, reactive, ref } from "vue";
 import { deleteExpense, listExpenses, saveExpense } from "../api/client";
 import type { Expense } from "../types/admin";
 
-const expenseCategories = ["設備費用", "日常消耗", "電費", "水費", "瓦斯費", "食材", "租金", "其他"];
+const expenseCategories = ["設備", "設備費用", "日常消耗", "電費", "水費", "瓦斯費", "食材", "租金", "其他"];
 const today = new Date().toISOString().slice(0, 10);
 const items = ref<Expense[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
+const isModalOpen = ref(false);
 const filters = reactive({ startDate: "", endDate: "", category: "" });
 const form = ref<Partial<Expense>>({ expenseDate: today, category: "日常消耗", name: "", amount: 0, note: "" });
 
@@ -119,6 +142,18 @@ function resetForm(): void {
   form.value = { expenseDate: today, category: "日常消耗", name: "", amount: 0, note: "" };
 }
 
+function openCreateModal(): void {
+  resetForm();
+  error.value = "";
+  isModalOpen.value = true;
+}
+
+function closeModal(): void {
+  if (saving.value) return;
+  isModalOpen.value = false;
+  resetForm();
+}
+
 function resetFilters(): void {
   filters.startDate = "";
   filters.endDate = "";
@@ -126,12 +161,14 @@ function resetFilters(): void {
   void load();
 }
 
-function edit(item: Expense): void {
+function openEditModal(item: Expense): void {
   form.value = {
     ...item,
     expenseDate: formatExpenseDate(item.expenseDate),
     category: item.category || "日常消耗"
   };
+  error.value = "";
+  isModalOpen.value = true;
 }
 
 async function load(): Promise<void> {
@@ -159,6 +196,7 @@ async function submit(): Promise<void> {
       ...form.value,
       category: form.value.category || "日常消耗"
     });
+    isModalOpen.value = false;
     resetForm();
     await load();
   } catch {
