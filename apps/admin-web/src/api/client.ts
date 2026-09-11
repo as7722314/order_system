@@ -11,6 +11,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let authExpiredNotified = false;
+
+api.interceptors.response.use(
+  (response) => {
+    if (response.config.url?.includes("/admin/auth/login")) authExpiredNotified = false;
+    return response;
+  },
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !error.config?.url?.includes("/admin/auth/login")) {
+      localStorage.removeItem("admin_token");
+      if (!authExpiredNotified) {
+        authExpiredNotified = true;
+        window.dispatchEvent(new CustomEvent("admin-auth-expired"));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export async function login(account: string, password: string): Promise<string> {
   const response = await api.post<ApiResponse<{ accessToken: string }>>("/admin/auth/login", { account, password });
   return response.data.data.accessToken;

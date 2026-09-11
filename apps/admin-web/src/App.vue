@@ -82,13 +82,21 @@ function logout(): void {
   void router.push("/login");
 }
 
+function handleAuthExpired(): void {
+  mobileMenuOpen.value = false;
+  auth.logout();
+  void router.replace({ path: "/login", query: { reason: "expired" } });
+}
+
 onMounted(() => {
   desktopMediaQuery = window.matchMedia("(min-width: 768px)");
   updateDesktopState();
   desktopMediaQuery.addEventListener("change", updateDesktopState);
+  window.addEventListener("admin-auth-expired", handleAuthExpired);
 });
 
 onBeforeUnmount(() => {
   desktopMediaQuery?.removeEventListener("change", updateDesktopState);
+  window.removeEventListener("admin-auth-expired", handleAuthExpired);
 });
 </script>

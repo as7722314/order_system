@@ -9,10 +9,6 @@ function getRedirectUri(): string {
   return window.location.href;
 }
 
-function isLineInAppBrowser(): boolean {
-  return /Line\//i.test(window.navigator.userAgent);
-}
-
 function startLineLogin(): void {
   liff.login({ redirectUri: getRedirectUri() });
 }
@@ -31,12 +27,6 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     await liff.init({ liffId });
-    if (!liff.isInClient() && !isLineInAppBrowser()) {
-      logout();
-      loginError.value = "請從官方 LINE 內開啟點餐頁面，外部瀏覽器暫不開放點餐。";
-      throw new Error(loginError.value);
-    }
-
     if (!liff.isLoggedIn()) {
       startLineLogin();
       return;
@@ -53,7 +43,7 @@ export const useAuthStore = defineStore("auth", () => {
       }
 
       sessionStorage.removeItem(idTokenRetryKey);
-      loginError.value = "LINE 登入未取得 ID Token。請確認 LINE LIFF Scope 已啟用 openid/profile，Endpoint URL 是目前網址，然後從 LINE 重新開啟。";
+      loginError.value = "LINE 登入未取得 ID Token。請確認 LINE LIFF Scope 已啟用 openid/profile，且 Endpoint URL 是目前網址後重新登入。";
       throw new Error(loginError.value);
     }
 

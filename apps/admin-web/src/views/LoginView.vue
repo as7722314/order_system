@@ -34,23 +34,26 @@
         </div>
       </div>
       <button class="mt-5 w-full rounded-md bg-accent py-3 font-medium text-white" :disabled="submitting">登入</button>
+      <p v-if="sessionExpired" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">登入已過期，請重新登入。</p>
       <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
     </form>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useAdminAuthStore } from "../stores/adminAuthStore";
 
 const auth = useAdminAuthStore();
+const route = useRoute();
 const router = useRouter();
 const account = ref("");
 const password = ref("");
 const showPassword = ref(false);
 const submitting = ref(false);
 const error = ref("");
+const sessionExpired = computed(() => route.query.reason === "expired");
 
 async function submit(): Promise<void> {
   submitting.value = true;
