@@ -1,31 +1,31 @@
 <template>
   <div class="min-h-screen pb-5 text-griddle-800">
-    <header class="sticky top-0 z-20 border-b-4 border-brand-100 bg-brand-50/95 shadow-lg backdrop-blur">
-      <nav class="w-full px-2 py-2">
-        <RouterLink to="/" class="block rounded-lg bg-white/80 py-2 text-center text-[42px] font-black leading-tight text-brand-700 shadow-sm ring-1 ring-brand-100">蔥油餅點餐</RouterLink>
-        <div v-if="auth.token && lineBrowserAllowed" class="mt-2 grid grid-cols-3 gap-2 text-center text-[30px] font-black leading-tight">
-          <RouterLink class="top-tab rounded-lg bg-white px-2 py-4 text-griddle-800 shadow-sm ring-1 ring-brand-100" to="/">點餐</RouterLink>
-          <RouterLink class="top-tab rounded-lg bg-white px-2 py-4 text-griddle-800 shadow-sm ring-1 ring-brand-100" to="/orders">訂單</RouterLink>
-          <RouterLink class="top-tab rounded-lg bg-white px-2 py-4 text-griddle-800 shadow-sm ring-1 ring-brand-100" to="/cart">購物車 {{ cart.items.length }}</RouterLink>
+    <header class="customer-header">
+      <nav class="w-full px-3 py-3">
+        <RouterLink to="/" class="brand-pill">何佳佳蔥油餅</RouterLink>
+        <div v-if="auth.token && lineBrowserAllowed" class="mt-3 grid grid-cols-3 gap-2 text-center">
+          <RouterLink class="top-tab" to="/">點餐</RouterLink>
+          <RouterLink class="top-tab" to="/orders">訂單</RouterLink>
+          <RouterLink class="top-tab" to="/cart">購物車 {{ cart.items.length }}</RouterLink>
         </div>
       </nav>
     </header>
 
-    <main v-if="!lineBrowserAllowed" class="w-full px-2 py-3">
-      <section class="rounded-lg border-4 border-brand-100 bg-white/95 p-4 text-center shadow-lg">
-        <h1 class="text-[48px] font-black leading-tight text-brand-700">請從 LINE 開啟</h1>
-        <p class="mt-5 text-[30px] font-bold leading-[1.45] text-griddle-800">點餐頁面僅開放在官方 LINE 內建瀏覽器使用。請回到官方 LINE，從選單或連結重新進入。</p>
+    <main v-if="!lineBrowserAllowed" class="customer-shell">
+      <section class="surface-panel text-center">
+        <h1 class="hero-title">請從 LINE 開啟</h1>
+        <p class="hero-copy">點餐頁面僅開放在官方 LINE 內建瀏覽器使用。請回到官方 LINE，從選單或連結重新進入。</p>
       </section>
     </main>
 
-    <main v-else-if="!auth.token" class="w-full px-2 py-3">
-      <section class="rounded-lg border-4 border-brand-100 bg-white/95 p-4 text-center shadow-lg">
-        <h1 class="text-[48px] font-black leading-tight text-brand-700">請先登入 LINE</h1>
-        <p class="mt-5 text-[30px] font-bold leading-[1.45] text-griddle-800">登入後即可瀏覽商品、加入購物車與送出訂單。</p>
-        <button class="mt-7 w-full rounded-lg bg-scallion-600 py-5 text-[34px] font-black leading-tight text-white shadow-lg" :disabled="loggingIn" @click="login">
+    <main v-else-if="!auth.token" class="customer-shell">
+      <section class="surface-panel text-center">
+        <h1 class="hero-title">請先登入 LINE</h1>
+        <p class="hero-copy">登入後即可瀏覽商品、加入購物車與送出訂單。</p>
+        <button class="primary-action mt-7" :disabled="loggingIn" @click="login">
           {{ loggingIn ? "登入中..." : "使用 LINE 登入" }}
         </button>
-        <p v-if="auth.loginError || error" class="mt-4 text-[26px] font-bold leading-snug text-red-700">{{ auth.loginError || error }}</p>
+        <p v-if="auth.loginError || error" class="mt-4 text-[24px] font-bold leading-snug text-red-700">{{ auth.loginError || error }}</p>
       </section>
     </main>
 
@@ -33,9 +33,9 @@
 
     <div v-if="lineBrowserAllowed && authExpiredOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-4 py-6">
       <section class="w-full max-w-md rounded-2xl border-4 border-brand-100 bg-white p-6 text-center shadow-2xl">
-        <h2 class="text-[48px] font-black leading-tight text-brand-700">登入已過期</h2>
-        <p class="mt-5 text-[30px] font-black leading-snug text-griddle-800">系統偵測到登入狀態失效，請重新使用 LINE 登入後繼續點餐。</p>
-        <button class="mt-7 w-full rounded-lg bg-scallion-600 py-5 text-[32px] font-black leading-tight text-white disabled:opacity-60" :disabled="reauthenticating" type="button" @click="relogin">
+        <h2 class="hero-title">登入已過期</h2>
+        <p class="hero-copy">系統偵測到登入狀態失效，請重新使用 LINE 登入後繼續點餐。</p>
+        <button class="primary-action mt-7" :disabled="reauthenticating" type="button" @click="relogin">
           {{ reauthenticating ? "登入中..." : "重新登入" }}
         </button>
         <p v-if="auth.loginError || error" class="mt-4 text-[24px] font-bold leading-snug text-red-700">{{ auth.loginError || error }}</p>
@@ -44,9 +44,9 @@
 
     <div v-if="lineBrowserAllowed && storeStatus && !storeStatus.isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
       <section class="w-full max-w-md rounded-2xl border-4 border-brand-100 bg-white p-6 text-center shadow-2xl">
-        <h2 class="text-[48px] font-black leading-tight text-brand-700">目前非營業時間</h2>
-        <p class="mt-5 text-[30px] font-black leading-snug text-griddle-800">現在暫停線上點餐，恢復營業後此提示會自動關閉。</p>
-        <button class="mt-7 w-full rounded-lg bg-scallion-600 py-5 text-[32px] font-black leading-tight text-white disabled:opacity-60" :disabled="checkingStoreStatus" type="button" @click="loadStoreStatus">
+        <h2 class="hero-title">目前非營業時間</h2>
+        <p class="hero-copy">現在暫停線上點餐，恢復營業後此提示會自動關閉。</p>
+        <button class="primary-action mt-7" :disabled="checkingStoreStatus" type="button" @click="loadStoreStatus">
           {{ checkingStoreStatus ? "檢查中..." : "重新檢查" }}
         </button>
       </section>

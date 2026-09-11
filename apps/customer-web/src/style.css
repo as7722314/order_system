@@ -3,17 +3,21 @@
 @tailwind utilities;
 
 html {
-  background: #fff5cf;
-  font-size: 24px;
+  background: #f7e3a3;
+  font-size: 22px;
 }
 
 body {
   margin: 0;
-  color: #3a2814;
+  color: #2f2113;
   font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
   background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0 10px, rgba(244, 184, 64, 0.09) 10px 20px),
-    linear-gradient(180deg, #fff1a8 0%, #fff8e8 42%, #ead09a 100%);
+    radial-gradient(circle at 16% 8%, rgba(88, 135, 45, 0.18) 0 4px, transparent 5px),
+    radial-gradient(circle at 78% 14%, rgba(88, 135, 45, 0.16) 0 3px, transparent 4px),
+    radial-gradient(circle at 44% 32%, rgba(177, 101, 21, 0.14) 0 5px, transparent 6px),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0 12px, rgba(186, 121, 21, 0.08) 12px 24px),
+    linear-gradient(180deg, #fff1a6 0%, #fff7dc 44%, #e4bf73 100%);
+  background-attachment: fixed;
   min-height: 100vh;
 }
 
@@ -23,10 +27,9 @@ body::before {
   z-index: -1;
   pointer-events: none;
   content: "";
-  background-image:
-    linear-gradient(90deg, rgba(77, 125, 32, 0.12) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(184, 121, 19, 0.08) 1px, transparent 1px);
-  background-size: 34px 34px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.18)),
+    repeating-linear-gradient(90deg, rgba(70, 49, 22, 0.06) 0 1px, transparent 1px 42px);
 }
 
 * {
@@ -46,12 +49,12 @@ a {
 }
 
 button {
-  min-height: 76px;
+  min-height: 64px;
 }
 
 input,
 textarea {
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1.35;
 }
 
@@ -69,7 +72,97 @@ button:disabled {
 }
 
 .top-tab.router-link-active {
-  background: #4d7d20;
+  background: #315d1b;
   color: #ffffff;
-  box-shadow: 0 10px 20px rgba(54, 92, 24, 0.24);
+  box-shadow: inset 0 -5px 0 rgba(255, 214, 88, 0.72), 0 12px 24px rgba(54, 92, 24, 0.2);
+}
+
+@layer components {
+  .customer-shell {
+    @apply w-full px-3 pb-5 pt-3;
+  }
+
+  .customer-header {
+    @apply sticky top-0 z-20 border-b border-amber-200/80 bg-[#fff4c4]/95 shadow-[0_10px_24px_rgba(92,55,16,0.16)] backdrop-blur;
+  }
+
+  .brand-pill {
+    @apply block rounded-lg border-2 border-white/80 bg-[#315d1b] px-4 py-3 text-center text-[34px] font-black leading-tight text-white shadow-[0_8px_0_rgba(139,86,17,0.18)];
+  }
+
+  .top-tab {
+    @apply rounded-lg border-2 border-amber-100 bg-white/95 px-2 py-3 text-[26px] font-black leading-tight text-griddle-800 shadow-sm;
+  }
+
+  .hero-panel {
+    @apply overflow-hidden rounded-lg border-2 border-white/80 bg-white/90 shadow-[0_18px_32px_rgba(92,55,16,0.18)];
+  }
+
+  .hero-strip {
+    @apply bg-[#315d1b] px-4 py-2 text-[24px] font-black leading-tight text-[#fff1a6];
+  }
+
+  .hero-title {
+    @apply text-[38px] font-black leading-[1.08] text-brand-700;
+  }
+
+  .hero-copy {
+    @apply mt-3 text-[25px] font-black leading-snug text-griddle-800;
+  }
+
+  .food-card {
+    @apply overflow-hidden rounded-lg border-2 border-white/80 bg-white/95 shadow-[0_16px_30px_rgba(92,55,16,0.16)];
+  }
+
+  .food-card-top {
+    @apply h-2 bg-gradient-to-r from-[#315d1b] via-[#d49a1f] to-[#8d560d];
+  }
+
+  .food-title {
+    @apply break-words text-[34px] font-black leading-tight text-griddle-800;
+  }
+
+  .food-copy {
+    @apply mt-3 text-[24px] font-bold leading-[1.42] text-stone-700;
+  }
+
+  .price-panel {
+    @apply rounded-lg border-2 border-amber-100 bg-[#fff6d8] p-4 shadow-inner;
+  }
+
+  .price-label {
+    @apply block text-[20px] font-black leading-tight text-scallion-700;
+  }
+
+  .price-value {
+    @apply mt-1 text-[42px] font-black leading-none text-brand-700;
+  }
+
+  .primary-action {
+    @apply w-full rounded-lg bg-[#315d1b] px-4 py-4 text-[30px] font-black leading-tight text-white shadow-[0_8px_0_rgba(139,86,17,0.24)] disabled:opacity-60;
+  }
+
+  .secondary-action {
+    @apply w-full rounded-lg border-2 border-amber-200 bg-white px-4 py-4 text-[26px] font-black leading-tight text-griddle-800;
+  }
+
+  .danger-action {
+    @apply w-full rounded-lg border-2 border-red-200 bg-red-50 px-4 py-4 text-[26px] font-black leading-tight text-red-700;
+  }
+
+  .surface-panel {
+    @apply rounded-lg border-2 border-white/80 bg-white/95 p-4 shadow-[0_12px_24px_rgba(92,55,16,0.14)];
+  }
+
+  .field-label {
+    @apply mb-2 block text-[24px] font-black leading-tight text-griddle-800;
+  }
+
+  .field-input {
+    @apply w-full rounded-lg border-2 border-amber-100 bg-white p-4 text-[26px] font-bold text-griddle-800 shadow-inner;
+  }
+
+  .status-panel {
+    @apply rounded-lg border-2 border-amber-100 bg-[#fff6d8] p-4;
+  }
 }

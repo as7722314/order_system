@@ -1,35 +1,35 @@
 <template>
-  <main class="w-full px-2 py-2">
-    <div class="mb-3 space-y-3 rounded-lg border-4 border-brand-100 bg-white/95 p-4 shadow-lg">
-      <h1 class="text-[54px] font-black leading-tight text-brand-700">我的訂單</h1>
-      <button class="w-full rounded-lg border-2 border-brand-100 bg-brand-50 px-3 py-5 text-[34px] font-black leading-tight text-griddle-800" :disabled="loading" @click="load">重新整理</button>
+  <main class="customer-shell">
+    <div class="hero-panel mb-4 p-4">
+      <h1 class="hero-title">我的訂單</h1>
+      <button class="secondary-action mt-4" :disabled="loading" @click="load">重新整理</button>
     </div>
 
-    <div v-if="loading" class="rounded-lg border-4 border-brand-100 bg-white/95 p-5 text-[38px] font-black leading-snug text-stone-700">載入中...</div>
-    <div v-else-if="error" class="rounded-lg border-4 border-red-200 bg-red-50 p-5 text-[32px] font-black leading-snug text-red-700">{{ error }}</div>
-    <div v-else-if="orders.length === 0" class="rounded-lg border-4 border-brand-100 bg-white/95 p-5 text-[38px] font-black leading-snug text-stone-700">目前沒有歷史訂單。</div>
+    <div v-if="loading" class="surface-panel text-[30px] font-black leading-snug text-stone-700">載入中...</div>
+    <div v-else-if="error" class="rounded-lg border-4 border-red-200 bg-red-50 p-5 text-[28px] font-black leading-snug text-red-700">{{ error }}</div>
+    <div v-else-if="orders.length === 0" class="surface-panel text-[30px] font-black leading-snug text-stone-700">目前沒有歷史訂單。</div>
 
     <section v-else class="space-y-4">
-      <article v-for="order in orders" :key="order.orderNumber" class="overflow-hidden rounded-lg border-4 border-brand-100 bg-white/95 shadow-lg">
-        <div class="bg-scallion-600 px-4 py-3 text-[30px] font-black leading-tight text-white">{{ formatDate(order.createdAt) }}</div>
+      <article v-for="order in orders" :key="order.orderNumber" class="food-card">
+        <div class="hero-strip">{{ formatDate(order.createdAt) }}</div>
         <div class="space-y-4 p-4">
           <div>
-            <h2 class="break-all text-[42px] font-black leading-tight text-griddle-800">{{ order.orderNumber }}</h2>
+            <h2 class="break-all text-[32px] font-black leading-tight text-griddle-800">{{ order.orderNumber }}</h2>
           </div>
-          <div class="grid grid-cols-1 gap-3 rounded-lg bg-brand-50 p-4 ring-2 ring-brand-100">
+          <div class="status-panel grid grid-cols-1 gap-3">
             <OrderStatusBadge :status="order.status" />
-            <div class="text-[50px] font-black leading-none text-brand-700">NT$ {{ order.totalAmount }}</div>
+            <div class="price-value">NT$ {{ order.totalAmount }}</div>
           </div>
         </div>
-        <div class="divide-y-4 divide-brand-100 border-t-4 border-brand-100 bg-white/80 px-4">
-          <div v-for="item in order.items" :key="item.id" class="py-5 text-[32px] leading-snug">
-            <span class="block break-words text-[36px] font-black leading-tight text-griddle-800">{{ item.productNameSnapshot }} x {{ item.quantity }}</span>
-            <span class="mt-2 block text-[34px] font-black leading-tight text-brand-700">NT$ {{ item.subtotal }}</span>
-            <div v-if="item.flavors.length" class="mt-3 text-[32px] font-black leading-snug text-scallion-700">{{ item.flavors.map((flavor) => flavor.flavorNameSnapshot).join("、") }}</div>
-            <div v-if="item.note" class="mt-3 text-[30px] font-bold leading-snug text-stone-600">{{ item.note }}</div>
+        <div class="divide-y-2 divide-amber-100 border-t-2 border-amber-100 bg-white/80 px-4">
+          <div v-for="item in order.items" :key="item.id" class="py-5 leading-snug">
+            <span class="block break-words text-[30px] font-black leading-tight text-griddle-800">{{ item.productNameSnapshot }} x {{ item.quantity }}</span>
+            <span class="mt-2 block text-[28px] font-black leading-tight text-brand-700">NT$ {{ item.subtotal }}</span>
+            <div v-if="item.flavors.length" class="mt-3 rounded-lg bg-[#eef8dc] p-3 text-[25px] font-black leading-snug text-scallion-700">{{ item.flavors.map((flavor) => flavor.flavorNameSnapshot).join("、") }}</div>
+            <div v-if="item.note" class="mt-3 text-[24px] font-bold leading-snug text-stone-600">{{ item.note }}</div>
           </div>
         </div>
-        <p v-if="order.cancelReason" class="m-4 rounded-lg bg-red-50 p-4 text-[30px] font-bold leading-snug text-red-700">取消原因：{{ order.cancelReason }}</p>
+        <p v-if="order.cancelReason" class="m-4 rounded-lg bg-red-50 p-4 text-[24px] font-bold leading-snug text-red-700">取消原因：{{ order.cancelReason }}</p>
       </article>
     </section>
   </main>

@@ -1,31 +1,31 @@
 <template>
-  <main class="w-full px-2 py-2">
-    <section class="rounded-lg border border-brand-100 bg-white/95 p-4">
-      <h1 class="text-[46px] font-black leading-tight text-brand-700">訂單查詢</h1>
+  <main class="customer-shell">
+    <section class="surface-panel">
+      <h1 class="hero-title">訂單查詢</h1>
       <div class="mt-5 space-y-4">
-        <input v-model.trim="orderNumber" class="w-full rounded-lg border border-brand-100 p-4 text-[30px] font-bold" placeholder="訂單編號" />
-        <input v-model.trim="phoneLast3" class="w-full rounded-lg border border-brand-100 p-4 text-[30px] font-bold" inputmode="numeric" placeholder="手機末三碼" maxlength="3" />
-        <button class="w-full rounded-lg bg-scallion-600 py-5 text-[34px] font-black leading-tight text-white" :disabled="loading" @click="submit">
+        <input v-model.trim="orderNumber" class="field-input" placeholder="訂單編號" />
+        <input v-model.trim="phoneLast3" class="field-input" inputmode="numeric" placeholder="手機末三碼" maxlength="3" />
+        <button class="primary-action" :disabled="loading" @click="submit">
           {{ loading ? "查詢中..." : "查詢" }}
         </button>
       </div>
       <p v-if="error" class="mt-4 text-[26px] font-black leading-snug text-red-700">{{ error }}</p>
     </section>
 
-    <article v-if="result" class="mt-3 rounded-lg border border-brand-100 bg-white/95 p-4">
+    <article v-if="result" class="food-card mt-4 p-4">
       <div class="space-y-3">
         <div>
-          <div class="text-[26px] font-bold leading-tight text-stone-600">{{ formatDate(result.createdAt) }}</div>
-          <h2 class="mt-2 break-all text-[34px] font-black leading-tight text-griddle-800">{{ result.orderNumber }}</h2>
-          <div class="mt-2 text-[26px] font-bold leading-tight text-stone-600">{{ result.customerName }}</div>
+          <div class="text-[22px] font-bold leading-tight text-stone-600">{{ formatDate(result.createdAt) }}</div>
+          <h2 class="mt-2 break-all text-[30px] font-black leading-tight text-griddle-800">{{ result.orderNumber }}</h2>
+          <div class="mt-2 text-[22px] font-bold leading-tight text-stone-600">{{ result.customerName }}</div>
         </div>
-        <div class="flex items-center justify-between gap-2">
+        <div class="status-panel grid gap-3">
           <OrderStatusBadge :status="result.status" />
-          <div class="text-[38px] font-black leading-none text-brand-700">NT$ {{ result.totalAmount }}</div>
+          <div class="price-value">NT$ {{ result.totalAmount }}</div>
         </div>
       </div>
-      <div class="mt-4 divide-y divide-brand-100 border-t border-brand-100 pt-2">
-        <div v-for="item in result.items" :key="item.id" class="py-4 text-[26px] leading-snug">
+      <div class="mt-4 divide-y divide-amber-100 border-t border-amber-100 pt-2">
+        <div v-for="item in result.items" :key="item.id" class="py-4 text-[24px] leading-snug">
           <div class="space-y-2">
             <span class="block break-words font-black">{{ item.productNameSnapshot }} x {{ item.quantity }}</span>
             <span class="block font-black text-brand-700">NT$ {{ item.subtotal }}</span>
