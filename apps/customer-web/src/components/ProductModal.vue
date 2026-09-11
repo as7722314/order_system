@@ -1,17 +1,23 @@
 <template>
-  <div v-if="product" class="fixed inset-0 z-30 bg-griddle-800/55 px-3 py-3 backdrop-blur-sm" @click.self="$emit('close')">
-    <section class="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-lg border-2 border-white/80 bg-white shadow-2xl">
-      <div class="food-card-top"></div>
-      <div class="space-y-5 overflow-y-auto p-4">
-        <div>
-          <h2 class="food-title">{{ product.name }}</h2>
-          <p class="food-copy">{{ product.description }}</p>
-          <p class="price-value mt-4">NT$ {{ product.price }}</p>
+  <div v-if="product" class="product-modal fixed inset-0 z-30 px-3 py-3" @click.self="$emit('close')">
+    <section class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="space-y-5 overflow-y-auto px-4 pb-5">
+        <div class="modal-product-head">
+          <div class="min-w-0">
+            <span class="product-label">口味選擇</span>
+            <h2 class="food-title">{{ product.name }}</h2>
+            <p class="food-copy">{{ product.description }}</p>
+          </div>
+          <div class="price-tag">
+            <span>NT$</span>
+            <strong>{{ product.price }}</strong>
+          </div>
         </div>
         <div>
-          <div class="mb-3 text-[26px] font-black leading-snug text-griddle-800">口味 已選擇 {{ selectedFlavorIds.length }} / 2</div>
+          <div class="section-label">選擇口味 <small>已選 {{ selectedFlavorIds.length }} / 2</small></div>
           <div class="grid grid-cols-1 gap-3">
-            <label v-for="item in product.productFlavors" :key="item.flavor.id" class="flex min-h-[76px] items-center gap-3 rounded-lg border-2 border-amber-100 bg-[#fff6d8] p-4 text-[26px] font-black leading-tight">
+            <label v-for="item in product.productFlavors" :key="item.flavor.id" class="flavor-option">
               <input
                 v-model="selectedFlavorIds"
                 class="h-8 w-8 shrink-0 accent-scallion-600"
@@ -23,12 +29,12 @@
             </label>
           </div>
         </div>
-        <div class="status-panel">
-          <span class="block text-[26px] font-black leading-tight">數量</span>
+        <div class="quantity-panel">
+          <span class="section-label">數量</span>
           <div class="mt-3 grid grid-cols-[82px_1fr_82px] items-center gap-3">
-            <button class="h-[82px] rounded-lg border border-brand-100 bg-white text-[48px] font-black leading-none" :disabled="quantity <= 1" @click="quantity -= 1">-</button>
-            <span class="text-center text-[48px] font-black leading-none">{{ quantity }}</span>
-            <button class="h-[82px] rounded-lg border border-brand-100 bg-white text-[48px] font-black leading-none" @click="quantity += 1">+</button>
+            <button class="quantity-button" :disabled="quantity <= 1" @click="quantity -= 1">−</button>
+            <span class="text-center text-[42px] font-bold leading-none">{{ quantity }}</span>
+            <button class="quantity-button" @click="quantity += 1">＋</button>
           </div>
         </div>
         <textarea v-model="note" class="field-input" rows="3" placeholder="備註"></textarea>

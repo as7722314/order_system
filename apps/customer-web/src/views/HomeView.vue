@@ -1,26 +1,33 @@
 <template>
   <main class="customer-shell">
     <section class="hero-panel mb-4">
-      <div class="hero-strip">今日現煎</div>
-      <div class="p-4">
-        <h1 class="hero-title">蔥香金黃，趁熱點餐</h1>
-        <p class="hero-copy">選好口味後加入購物車，現煎熱度剛剛好。</p>
+      <div class="hero-content">
+        <span class="hero-kicker">今日現煎</span>
+        <h1 class="hero-title">今天想吃哪一份？</h1>
+        <p class="hero-copy">選好口味與數量，我們收到訂單後立即為你準備。</p>
+        <div class="hero-note"><span></span> 線上點餐僅提供當日取餐</div>
       </div>
     </section>
 
     <div class="space-y-4">
       <article v-for="product in products" :key="product.id" class="food-card">
-        <div class="food-card-top"></div>
-        <div class="space-y-4 p-4">
-          <div class="min-w-0">
-            <h2 class="food-title">{{ product.name }}</h2>
+        <div class="p-4">
+          <div class="product-heading">
+            <div class="min-w-0">
+              <span class="product-label">現點現煎</span>
+              <h2 class="food-title">{{ product.name }}</h2>
+            </div>
+            <div class="price-tag">
+              <span>NT$</span>
+              <strong>{{ product.price }}</strong>
+            </div>
+          </div>
+          <div class="mt-3">
             <p class="food-copy">{{ product.description }}</p>
           </div>
-          <div class="price-panel">
-            <span class="price-label">價格</span>
-            <p class="price-value">NT$ {{ product.price }}</p>
-          </div>
-          <button class="primary-action" @click="selectedProduct = product">立即選擇</button>
+          <button class="primary-action mt-5" @click="selectedProduct = product">
+            選擇口味與數量 <span aria-hidden="true">›</span>
+          </button>
         </div>
       </article>
     </div>

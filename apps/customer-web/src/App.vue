@@ -2,24 +2,32 @@
   <div class="min-h-screen pb-5 text-griddle-800">
     <header class="customer-header">
       <nav class="w-full px-3 py-3">
-        <RouterLink to="/" class="brand-pill">何佳佳蔥油餅</RouterLink>
-        <div v-if="auth.token && lineBrowserAllowed" class="mt-3 grid grid-cols-3 gap-2 text-center">
+        <RouterLink to="/" class="brand-home">
+          <span class="brand-mark">何</span>
+          <span>
+            <strong>何佳佳蔥油餅</strong>
+            <small>每日現點現煎</small>
+          </span>
+        </RouterLink>
+        <div v-if="auth.token && lineBrowserAllowed" class="top-nav mt-3 grid grid-cols-3 gap-1 text-center">
           <RouterLink class="top-tab" to="/">點餐</RouterLink>
           <RouterLink class="top-tab" to="/orders">訂單</RouterLink>
-          <RouterLink class="top-tab" to="/cart">購物車 {{ cart.items.length }}</RouterLink>
+          <RouterLink class="top-tab" to="/cart">
+            購物車 <span v-if="cart.items.length" class="cart-count">{{ cart.items.length }}</span>
+          </RouterLink>
         </div>
       </nav>
     </header>
 
     <main v-if="!lineBrowserAllowed" class="customer-shell">
-      <section class="surface-panel text-center">
+      <section class="surface-panel notice-panel text-center">
         <h1 class="hero-title">請從 LINE 開啟</h1>
         <p class="hero-copy">點餐頁面僅開放在官方 LINE 內建瀏覽器使用。請回到官方 LINE，從選單或連結重新進入。</p>
       </section>
     </main>
 
     <main v-else-if="!auth.token" class="customer-shell">
-      <section class="surface-panel text-center">
+      <section class="surface-panel notice-panel text-center">
         <h1 class="hero-title">請先登入 LINE</h1>
         <p class="hero-copy">登入後即可瀏覽商品、加入購物車與送出訂單。</p>
         <button class="primary-action mt-7" :disabled="loggingIn" @click="login">
