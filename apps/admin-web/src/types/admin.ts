@@ -30,6 +30,7 @@ export type Product = {
   description?: string | null;
   imageUrl?: string | null;
   price: number;
+  cost: number;
   sortOrder: number;
   isActive: boolean;
   productFlavors?: ProductFlavor[];
@@ -52,6 +53,7 @@ export type OrderItem = {
   productNameSnapshot: string;
   quantity: number;
   unitPrice: number;
+  unitCostSnapshot: number;
   flavorExtraAmount: number;
   subtotal: number;
   note?: string | null;
@@ -94,6 +96,7 @@ export type Expense = {
 export type Report = {
   orderCount: number;
   totalRevenue: number;
+  totalProductCost: number;
   totalExpense: number;
   netProfit: number;
 };

@@ -9,7 +9,7 @@ import { errorMessage, formatDateTime, money, taipeiDate } from "../utils";
 
 export function DashboardScreen() {
   const today = taipeiDate();
-  const [report, setReport] = useState<Report>({ orderCount: 0, totalRevenue: 0, totalExpense: 0, netProfit: 0 });
+  const [report, setReport] = useState<Report>({ orderCount: 0, totalRevenue: 0, totalProductCost: 0, totalExpense: 0, netProfit: 0 });
   const [pending, setPending] = useState<Order[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [store, setStore] = useState<StoreStatus | null>(null);

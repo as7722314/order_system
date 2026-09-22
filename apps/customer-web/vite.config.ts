@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
   if (mode !== "production" && apiHost === productionApiHost) {
     throw new Error("Safety check: development mode cannot use the production API. Use a production build instead.");
   }
+  if (mode === "production" && env.VITE_DEV_BYPASS_AUTH === "true") {
+    throw new Error("Safety check: production mode cannot bypass customer authentication.");
+  }
 
   return {
     envDir: "../..",

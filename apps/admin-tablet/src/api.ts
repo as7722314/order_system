@@ -56,7 +56,7 @@ export const adminApi = {
   saveFlavor: (value: Partial<Flavor>) => request<void>(value.id ? `/admin/flavors/${value.id}` : "/admin/flavors", { method: value.id ? "PUT" : "POST", body: json(value) }),
   listProducts: () => request<Product[]>("/admin/products"),
   saveProduct: (value: Partial<Product> & { flavorIds: string[] }) => {
-    const body = { name: value.name || "", description: value.description || "", price: Number(value.price || 0), sortOrder: Number(value.sortOrder || 0), isActive: value.isActive ?? true, flavorIds: value.flavorIds };
+    const body = { name: value.name || "", description: value.description || "", price: Number(value.price || 0), cost: Number(value.cost || 0), sortOrder: Number(value.sortOrder || 0), isActive: value.isActive ?? true, flavorIds: value.flavorIds };
     return request<void>(value.id ? `/admin/products/${value.id}` : "/admin/products", { method: value.id ? "PUT" : "POST", body: json(body) });
   },
   deleteProduct: (id: string) => request<void>(`/admin/products/${id}`, { method: "DELETE" }),

@@ -6,6 +6,7 @@ import OrderDoneView from "../views/OrderDoneView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     { path: "/", component: HomeView },
     { path: "/cart", component: CartView },

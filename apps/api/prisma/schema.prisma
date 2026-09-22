@@ -75,6 +75,7 @@ model Product {
   description String?
   imageUrl    String?  @map("image_url")
   price       Int
+  cost        Int      @default(0)
   sortOrder   Int      @default(0) @map("sort_order")
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -156,6 +157,7 @@ model OrderItem {
   productNameSnapshot String   @map("product_name_snapshot")
   quantity            Int
   unitPrice           Int      @map("unit_price")
+  unitCostSnapshot    Int      @default(0) @map("unit_cost_snapshot")
   flavorExtraAmount   Int      @default(0) @map("flavor_extra_amount")
   subtotal            Int
   note                String?

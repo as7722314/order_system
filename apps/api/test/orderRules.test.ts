@@ -6,6 +6,7 @@ const product: CatalogProduct = {
   id: "product-1",
   name: "雞腿飯",
   price: 120,
+  cost: 65,
   isActive: true,
   productFlavors: [
     {
@@ -25,6 +26,7 @@ describe("order rules", () => {
     expect(result.subtotal).toBe(240);
     expect(result.flavorExtraAmount).toBe(30);
     expect(result.totalAmount).toBe(270);
+    expect(result.lines[0].unitCost).toBe(65);
   });
 
   it("rejects more than two flavors", () => {

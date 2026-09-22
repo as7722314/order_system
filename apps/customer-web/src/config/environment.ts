@@ -1,5 +1,6 @@
 export const APP_ENV = import.meta.env.VITE_APP_ENV || (import.meta.env.PROD ? "production" : "local");
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+export const DEV_BYPASS_AUTH = APP_ENV === "local" && import.meta.env.VITE_DEV_BYPASS_AUTH === "true";
 
 const productionApiHost = "line-order-system-api.onrender.com";
 const apiHost = new URL(API_BASE_URL, window.location.origin).hostname;

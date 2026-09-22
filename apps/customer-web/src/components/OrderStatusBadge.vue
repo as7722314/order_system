@@ -1,5 +1,5 @@
 <template>
-  <span class="inline-flex w-fit rounded-full px-5 py-3 text-[26px] font-black leading-tight shadow-sm" :class="classes">{{ label }}</span>
+  <span class="order-status-badge" :class="classes">{{ label }}</span>
 </template>
 
 <script setup lang="ts">

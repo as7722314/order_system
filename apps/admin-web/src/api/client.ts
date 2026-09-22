@@ -66,6 +66,7 @@ export async function saveProduct(payload: Partial<Product> & { flavorIds?: stri
     name: payload.name ?? "",
     description: payload.description ?? "",
     price: Number(payload.price ?? 0),
+    cost: Number(payload.cost ?? 0),
     sortOrder: Number(payload.sortOrder ?? 0),
     isActive: payload.isActive ?? true,
     flavorIds: payload.flavorIds ?? []
@@ -150,7 +151,7 @@ export async function dailyReport(date: string): Promise<Report> {
   return response.data.data;
 }
 
-export async function monthlyReport(month: string): Promise<Report & { month: string; daily: { date: string; revenue: number; expense: number; netProfit: number }[] }> {
-  const response = await api.get<ApiResponse<Report & { month: string; daily: { date: string; revenue: number; expense: number; netProfit: number }[] }>>("/admin/reports/monthly", { params: { month } });
+export async function monthlyReport(month: string): Promise<Report & { month: string; daily: { date: string; revenue: number; productCost: number; expense: number; netProfit: number }[] }> {
+  const response = await api.get<ApiResponse<Report & { month: string; daily: { date: string; revenue: number; productCost: number; expense: number; netProfit: number }[] }>>("/admin/reports/monthly", { params: { month } });
   return response.data.data;
 }

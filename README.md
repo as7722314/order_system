@@ -33,6 +33,8 @@ npm run build:production --workspace @line-order/admin-web
 
 若 development mode 被設定成正式 API，建置與啟動會直接中止，避免本機操作正式資料。平板 App 的環境設定與 APK 指令請見 `apps/admin-tablet/README.md`。
 
+本地顧客 Web 的 `.env.development` 會設定 `VITE_DEV_BYPASS_AUTH=true`，方便只預覽與調整手機介面；production mode 禁止啟用此參數，正式環境仍必須完成 LINE 登入。
+
 預設入口：
 
 - 顧客端：`http://localhost:5173`

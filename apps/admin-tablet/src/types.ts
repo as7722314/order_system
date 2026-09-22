@@ -10,6 +10,7 @@ export type Product = {
   description?: string | null;
   imageUrl?: string | null;
   price: number;
+  cost: number;
   sortOrder: number;
   isActive: boolean;
   productFlavors?: ProductFlavor[];
@@ -22,6 +23,7 @@ export type OrderItem = {
   productNameSnapshot: string;
   quantity: number;
   unitPrice: number;
+  unitCostSnapshot: number;
   flavorExtraAmount: number;
   subtotal: number;
   note?: string | null;
@@ -43,7 +45,7 @@ export type Order = {
 
 export type OnsiteOrderPayload = { items: { productId: string; quantity: number; flavorIds: string[] }[] };
 export type Expense = { id: string; expenseDate: string; category: string; name: string; amount: number; note?: string | null };
-export type Report = { orderCount: number; totalRevenue: number; totalExpense: number; netProfit: number };
+export type Report = { orderCount: number; totalRevenue: number; totalProductCost: number; totalExpense: number; netProfit: number };
 export type DailyReport = Report & { date: string };
-export type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; expense: number; netProfit: number }[] };
+export type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; productCost: number; expense: number; netProfit: number }[] };
 export type StoreStatus = { isOpen: boolean; updatedAt: string };

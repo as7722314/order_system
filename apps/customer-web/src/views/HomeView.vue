@@ -1,36 +1,49 @@
 <template>
   <main class="customer-shell">
-    <section class="hero-panel mb-4">
+    <section class="hero-panel">
       <div class="hero-content">
-        <span class="hero-kicker">今日現煎</span>
-        <h1 class="hero-title">今天想吃哪一份？</h1>
-        <p class="hero-copy">選好口味與數量，我們收到訂單後立即為你準備。</p>
-        <div class="hero-note"><span></span> 線上點餐僅提供當日取餐</div>
+        <div>
+          <span class="hero-kicker">今日現煎</span>
+          <h1 class="hero-title">今天想吃哪一份？</h1>
+          <p class="hero-copy">選好口味，送出後立即為你準備。</p>
+        </div>
+        <span class="hero-illustration" aria-hidden="true">餅</span>
       </div>
     </section>
 
-    <div class="space-y-4">
+    <div class="menu-heading">
+      <div>
+        <span class="menu-eyebrow">MENU</span>
+        <h2>現點現煎</h2>
+      </div>
+      <span>{{ products.length }} 項商品</span>
+    </div>
+
+    <div class="menu-list">
       <article v-for="product in products" :key="product.id" class="food-card">
-        <div class="p-4">
-          <div class="product-heading">
-            <div class="min-w-0">
-              <span class="product-label">現點現煎</span>
-              <h2 class="food-title">{{ product.name }}</h2>
-            </div>
-            <div class="price-tag">
-              <span>NT$</span>
-              <strong>{{ product.price }}</strong>
+        <button class="product-card-button" type="button" @click="selectedProduct = product">
+          <div class="product-thumb">
+            <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
+            <span v-else>餅</span>
+          </div>
+          <div class="product-card-body">
+            <h3 class="food-title">{{ product.name }}</h3>
+            <p class="food-copy">{{ product.description || "酥香現煎，口味任選" }}</p>
+            <div class="product-card-footer">
+              <strong class="menu-price"><small>NT$</small>{{ product.price }}</strong>
+              <span class="add-button" aria-hidden="true">＋</span>
             </div>
           </div>
-          <div class="mt-3">
-            <p class="food-copy">{{ product.description }}</p>
-          </div>
-          <button class="primary-action mt-5" @click="selectedProduct = product">
-            選擇口味與數量 <span aria-hidden="true">›</span>
-          </button>
-        </div>
+        </button>
       </article>
     </div>
+
+    <RouterLink v-if="cart.items.length" class="cart-dock" to="/cart">
+      <span class="cart-dock-count">{{ cart.items.length }}</span>
+      <span>查看購物車</span>
+      <strong>NT$ {{ cart.totalAmount }} <b>›</b></strong>
+    </RouterLink>
+
     <ProductModal :product="selectedProduct" @close="selectedProduct = null" @add="addToCart" />
   </main>
 </template>

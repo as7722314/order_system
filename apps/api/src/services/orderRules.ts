@@ -28,6 +28,7 @@ export type CalculatedLine = {
   productName: string;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
   flavorExtraAmount: number;
   subtotal: number;
   note?: string;
@@ -45,6 +46,7 @@ export type CatalogProduct = {
   id: string;
   name: string;
   price: number;
+  cost: number;
   isActive: boolean;
   productFlavors: {
     flavorId: string;
@@ -116,6 +118,7 @@ export function calculateOrder(inputItems: OrderLineInput[], products: CatalogPr
       productName: product.name,
       quantity: item.quantity,
       unitPrice: product.price,
+      unitCost: product.cost,
       flavorExtraAmount,
       subtotal,
       note: item.note,

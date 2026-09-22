@@ -9,13 +9,24 @@ export function taipeiMonthRange(month: string): { start: Date; end: Date; days:
   const [yearText, monthText] = month.split("-");
   const year = Number(yearText);
   const monthIndex = Number(monthText) - 1;
-  const startDate = new Date(Date.UTC(year, monthIndex, 1, 16, 0, 0));
-  const nextMonthDate = new Date(Date.UTC(year, monthIndex + 1, 1, 16, 0, 0));
+  const taipeiOffsetMs = 8 * 60 * 60 * 1000;
+  const startDate = new Date(Date.UTC(year, monthIndex, 1) - taipeiOffsetMs);
+  const nextMonthDate = new Date(Date.UTC(year, monthIndex + 1, 1) - taipeiOffsetMs);
   const days: string[] = [];
   for (let date = new Date(startDate); date < nextMonthDate; date = date.addDays(1)) {
     days.push(formatTaipeiDate(date));
   }
   return { start: startDate, end: nextMonthDate, days };
+}
+
+export function databaseDateMonthRange(month: string): { start: Date; end: Date } {
+  const [yearText, monthText] = month.split("-");
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1;
+  return {
+    start: new Date(Date.UTC(year, monthIndex, 1)),
+    end: new Date(Date.UTC(year, monthIndex + 1, 1))
+  };
 }
 
 export function formatTaipeiDate(date: Date): string {

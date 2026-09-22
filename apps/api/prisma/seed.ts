@@ -25,6 +25,7 @@ const products = [
     description: "一張分成兩袋一袋一個口味哦！",
     imageUrl: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d",
     price: 90,
+    cost: 0,
     sortOrder: 1,
     isActive: true
   },
@@ -35,6 +36,7 @@ const products = [
     description: "選兩個口味是混在同一包哦！",
     imageUrl: null,
     price: 45,
+    cost: 0,
     sortOrder: 2,
     isActive: true
   }

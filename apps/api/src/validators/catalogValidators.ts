@@ -18,6 +18,7 @@ export const productSchema = z.object({
   description: z.string().max(1000).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   price: z.number().int().nonnegative(),
+  cost: z.number().int().nonnegative().default(0),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
   flavorIds: z.array(z.string().uuid()).optional()

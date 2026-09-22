@@ -8,6 +8,7 @@
     <form class="mt-5 grid gap-3 rounded-lg border border-stone-200 bg-white p-4 md:grid-cols-4" @submit.prevent="submit">
       <input v-model="form.name" class="rounded-md border border-stone-300 p-3 md:col-span-2" placeholder="商品名稱" />
       <input v-model.number="form.price" class="rounded-md border border-stone-300 p-3" placeholder="售價" type="number" />
+      <input v-model.number="form.cost" class="rounded-md border border-stone-300 p-3" min="0" placeholder="商品成本" type="number" />
       <input v-model.number="form.sortOrder" class="rounded-md border border-stone-300 p-3" placeholder="排序" type="number" />
       <label class="flex items-center gap-2"><input v-model="form.isActive" type="checkbox" /> 啟用</label>
       <textarea v-model="form.description" class="rounded-md border border-stone-300 p-3 md:col-span-3" placeholder="商品說明"></textarea>
@@ -34,6 +35,7 @@
         <tr>
           <th class="p-3">名稱</th>
           <th class="p-3">售價</th>
+          <th class="p-3">商品成本</th>
           <th class="p-3">口味</th>
           <th class="p-3">排序</th>
           <th class="p-3">狀態</th>
@@ -47,6 +49,7 @@
             <div class="mt-1 text-xs text-stone-500">{{ item.description }}</div>
           </td>
           <td class="p-3">NT$ {{ item.price }}</td>
+          <td class="p-3">NT$ {{ item.cost }}</td>
           <td class="p-3 text-xs text-stone-600">{{ flavorNames(item) }}</td>
           <td class="p-3">{{ item.sortOrder }}</td>
           <td class="p-3">{{ item.isActive ? "啟用" : "停用" }}</td>
@@ -72,14 +75,14 @@ const selectedFlavorIds = ref<string[]>([]);
 const saving = ref(false);
 const message = ref("");
 const error = ref("");
-const form = ref<Partial<Product>>({ name: "", price: 0, sortOrder: 0, isActive: true, description: "" });
+const form = ref<Partial<Product>>({ name: "", price: 0, cost: 0, sortOrder: 0, isActive: true, description: "" });
 
 function allActiveFlavorIds(): string[] {
   return activeFlavors.value.map((flavor) => flavor.id);
 }
 
 function resetForm(): void {
-  form.value = { name: "", price: 0, sortOrder: 0, isActive: true, description: "" };
+  form.value = { name: "", price: 0, cost: 0, sortOrder: 0, isActive: true, description: "" };
   selectedFlavorIds.value = allActiveFlavorIds();
   message.value = "";
   error.value = "";
@@ -115,7 +118,7 @@ async function submit(): Promise<void> {
     await load();
     message.value = wasEditing ? "商品已儲存" : "商品已新增";
   } catch {
-    error.value = "商品儲存失敗，請確認商品名稱、售價與口味設定。";
+    error.value = "商品儲存失敗，請確認商品名稱、售價、成本與口味設定。";
   } finally {
     saving.value = false;
   }

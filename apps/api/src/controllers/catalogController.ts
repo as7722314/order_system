@@ -15,6 +15,11 @@ async function withDefaultFlavorsForUnconfiguredProducts<T extends { productFlav
   }) as T[];
 }
 
+function withoutProductCost<T extends { cost: number }>(product: T): Omit<T, "cost"> {
+  const { cost: _cost, ...publicProduct } = product;
+  return publicProduct;
+}
+
 export async function listPublicCategories(_req: Request, res: Response): Promise<Response> {
   const categories = await prisma.productCategory.findMany({
     where: { isActive: true },
@@ -41,7 +46,8 @@ export async function listPublicProducts(req: Request, res: Response): Promise<R
     },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }]
   });
-  return ok(res, await withDefaultFlavorsForUnconfiguredProducts(products));
+  const productsWithFlavors = await withDefaultFlavorsForUnconfiguredProducts(products);
+  return ok(res, productsWithFlavors.map(withoutProductCost));
 }
 
 export async function getPublicProduct(req: Request, res: Response): Promise<Response> {
@@ -57,5 +63,5 @@ export async function getPublicProduct(req: Request, res: Response): Promise<Res
   });
   if (!product) throw new AppError("RESOURCE_NOT_FOUND", "商品不存在", 404);
   const [productWithFlavors] = await withDefaultFlavorsForUnconfiguredProducts([product]);
-  return ok(res, productWithFlavors);
+  return ok(res, withoutProductCost(productWithFlavors));
 }

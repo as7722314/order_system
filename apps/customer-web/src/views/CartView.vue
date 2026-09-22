@@ -1,32 +1,45 @@
 <template>
-  <main class="customer-shell space-y-4">
-    <section class="space-y-3">
-      <article v-for="(item, index) in cart.items" :key="`${item.productId}-${index}`" class="food-card p-4">
-        <div class="space-y-4">
+  <main class="customer-shell">
+    <div class="page-heading">
+      <div>
+        <span class="menu-eyebrow">YOUR CART</span>
+        <h1>購物車</h1>
+      </div>
+      <span>{{ cart.items.length }} 項</span>
+    </div>
+
+    <section class="cart-list">
+      <article v-for="(item, index) in cart.items" :key="`${item.productId}-${index}`" class="food-card cart-item">
+        <div class="cart-item-main">
           <div class="min-w-0">
-            <h2 class="food-title">{{ item.productName }}</h2>
-            <p class="food-copy">NT$ {{ item.unitPrice }} x {{ item.quantity }}</p>
-            <p class="mt-3 rounded-lg bg-[#eef8dc] p-3 text-[24px] font-black leading-snug text-scallion-700">{{ item.flavors.map((flavor) => flavor.name).join("、") || "原味" }}</p>
-            <p v-if="item.note" class="mt-3 text-[23px] font-bold leading-snug text-stone-600">{{ item.note }}</p>
+            <h2 class="food-title">{{ item.productName }} <small>× {{ item.quantity }}</small></h2>
+            <p class="cart-flavors">{{ item.flavors.map((flavor) => flavor.name).join("、") || "原味" }}</p>
+            <p v-if="item.note" class="cart-note">{{ item.note }}</p>
           </div>
-          <button class="danger-action" @click="cart.remove(index)">移除</button>
+          <strong class="cart-item-price">NT$ {{ (item.unitPrice + item.flavors.reduce((sum, flavor) => sum + flavor.extraPrice, 0)) * item.quantity }}</strong>
         </div>
+        <button class="cart-remove" type="button" @click="cart.remove(index)">移除商品</button>
       </article>
-      <div v-if="cart.items.length === 0" class="surface-panel text-center text-[30px] font-black leading-snug text-stone-600">購物車目前沒有商品</div>
+      <div v-if="cart.items.length === 0" class="surface-panel empty-state">
+        <span>🛒</span>
+        <h2>購物車還是空的</h2>
+        <p>先去選一份現煎蔥油餅吧！</p>
+        <RouterLink class="primary-action" to="/">開始點餐</RouterLink>
+      </div>
     </section>
 
-    <aside class="surface-panel">
-      <h2 class="hero-title">訂單確認</h2>
+    <aside v-if="cart.items.length" class="surface-panel checkout-panel">
+      <h2>取餐資料</h2>
 
-      <div v-if="!auth.token" class="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
-        <p class="text-[24px] font-black leading-snug text-amber-900">請先使用 LINE 登入後再送出訂單。</p>
-        <button class="primary-action mt-4" :disabled="submitting" @click="login">
+      <div v-if="!auth.token" class="login-notice">
+        <p>請先使用 LINE 登入後再送出訂單。</p>
+        <button class="primary-action" :disabled="submitting" @click="login">
           使用 LINE 登入
         </button>
-        <p v-if="auth.loginError" class="mt-3 text-[24px] font-bold leading-snug text-red-700">{{ auth.loginError }}</p>
+        <p v-if="auth.loginError" class="form-error">{{ auth.loginError }}</p>
       </div>
 
-      <div class="mt-5 space-y-5">
+      <div class="checkout-fields">
         <label class="block">
           <span class="field-label">LINE 姓名</span>
           <input :value="auth.displayName || 'LINE 使用者'" class="field-input bg-griddle-50 text-stone-700" disabled />
@@ -40,14 +53,14 @@
           <textarea v-model="note" class="field-input" :disabled="!auth.token" rows="3" placeholder="可留空"></textarea>
         </label>
       </div>
-      <div class="mt-6 border-t border-brand-100 pt-5">
-        <span class="price-label">合計</span>
-        <span class="price-value block">NT$ {{ cart.totalAmount }}</span>
+      <div class="checkout-total">
+        <span>合計</span>
+        <strong>NT$ {{ cart.totalAmount }}</strong>
       </div>
-      <button class="primary-action mt-6" :disabled="!auth.token || cart.items.length === 0 || submitting" @click="submit">
+      <button class="primary-action" :disabled="!auth.token || cart.items.length === 0 || submitting" @click="submit">
         送出訂單
       </button>
-      <p v-if="error" class="mt-4 text-[26px] font-black leading-snug text-red-700">{{ error }}</p>
+      <p v-if="error" class="form-error">{{ error }}</p>
     </aside>
   </main>
 </template>

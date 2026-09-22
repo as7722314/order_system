@@ -1,0 +1,5 @@
+ALTER TABLE "products"
+ADD COLUMN "cost" INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE "order_items"
+ADD COLUMN "unit_cost_snapshot" INTEGER NOT NULL DEFAULT 0;

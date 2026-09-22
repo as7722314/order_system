@@ -13,6 +13,7 @@ type ProductBody = {
   description?: string;
   imageUrl?: string;
   price: number;
+  cost: number;
   sortOrder: number;
   isActive: boolean;
   flavorIds?: string[];
@@ -33,6 +34,7 @@ function cleanProductBody(body: ProductBody) {
     description: body.description,
     imageUrl: body.imageUrl || undefined,
     price: body.price,
+    cost: body.cost,
     sortOrder: body.sortOrder,
     isActive: body.isActive
   };
