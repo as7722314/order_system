@@ -1,7 +1,16 @@
+import Constants from "expo-constants";
 import type { ApiResponse, Category, DailyReport, Expense, Flavor, MonthlyReport, OnsiteOrderPayload, Order, OrderStatus, Product, StoreStatus } from "./types";
 
-const configuredUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-export const API_BASE_URL = (configuredUrl || "http://localhost:3000/api").replace(/\/$/, "");
+type AppEnvironment = "local" | "production";
+type AppExtra = { appEnvironment?: AppEnvironment; apiBaseUrl?: string };
+
+const extra = Constants.expoConfig?.extra as AppExtra | undefined;
+export const APP_ENV: AppEnvironment = extra?.appEnvironment === "production" ? "production" : "local";
+export const API_BASE_URL = (extra?.apiBaseUrl || "http://10.0.2.2:3000/api").replace(/\/$/, "");
+
+if (APP_ENV !== "production" && new URL(API_BASE_URL).hostname === "line-order-system-api.onrender.com") {
+  throw new Error("安全性檢查失敗：本地 App 不可連線正式 API");
+}
 
 let accessToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;

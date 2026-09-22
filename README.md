@@ -22,6 +22,17 @@ npm run dev --workspace @line-order/customer-web
 npm run dev --workspace @line-order/admin-web
 ```
 
+Web 環境由 Vite mode 明確區分：`.env.development` 固定使用本地 `/api` proxy，`.env.production` 才使用正式 API。建議使用下列明確指令：
+
+```bash
+npm run dev:local --workspace @line-order/customer-web
+npm run dev:local --workspace @line-order/admin-web
+npm run build:production --workspace @line-order/customer-web
+npm run build:production --workspace @line-order/admin-web
+```
+
+若 development mode 被設定成正式 API，建置與啟動會直接中止，避免本機操作正式資料。平板 App 的環境設定與 APK 指令請見 `apps/admin-tablet/README.md`。
+
 預設入口：
 
 - 顧客端：`http://localhost:5173`

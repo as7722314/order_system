@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, 
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/auth";
-import { adminApi } from "./src/api";
+import { adminApi, APP_ENV } from "./src/api";
 import { notifyNewOrders, prepareOrderNotifications, registerForOrderPushNotifications, subscribeToOrderNotificationResponses } from "./src/notifications";
 import { Button } from "./src/components/ui";
 import { CategoriesScreen } from "./src/screens/CategoriesScreen";
@@ -98,7 +98,7 @@ function Shell() {
   };
   const navItems = navigation.map((item) => <Pressable accessibilityRole="button" key={item.key} onPress={() => selectScreen(item.key)} style={({ pressed }) => [styles.navItem, active === item.key && styles.navItemActive, pressed && styles.navItemPressed]}><Text style={[styles.navIcon, active === item.key && styles.navTextActive]}>{item.icon}</Text><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text>{item.key === "orders" && unreadOrders ? <View style={styles.badge}><Text style={styles.badgeText}>{unreadOrders > 99 ? "99+" : unreadOrders}</Text></View> : null}</Pressable>);
   return <SafeAreaView style={styles.safe}><StatusBar style="dark" /><View style={[styles.shell, !tablet && styles.shellCompact]}>
-    {tablet ? <View style={styles.sidebar}><View style={styles.brand}><Text style={styles.brandMark}>O</Text><View><Text style={styles.brandTitle}>點餐管理</Text><Text style={styles.brandSub}>TABLET CONSOLE</Text></View></View><View style={styles.nav}>{navItems}</View><Button label="登出" variant="secondary" onPress={() => void handleSignOut()} /></View> : <View style={styles.mobileHeader}><Text style={styles.brandTitle}>點餐管理</Text><Button label="登出" variant="ghost" small onPress={() => void handleSignOut()} /></View>}
+    {tablet ? <View style={styles.sidebar}><View style={styles.brand}><Text style={styles.brandMark}>O</Text><View><Text style={styles.brandTitle}>點餐管理</Text><Text style={styles.brandSub}>{APP_ENV.toUpperCase()} · TABLET CONSOLE</Text></View></View><View style={styles.nav}>{navItems}</View><Button label="登出" variant="secondary" onPress={() => void handleSignOut()} /></View> : <View style={styles.mobileHeader}><Text style={styles.brandTitle}>點餐管理</Text><Button label="登出" variant="ghost" small onPress={() => void handleSignOut()} /></View>}
     {!tablet ? <ScrollView horizontal contentContainerStyle={styles.mobileNav} showsHorizontalScrollIndicator={false}>{navItems}</ScrollView> : null}
     <View style={styles.content}><Current /></View>
   </View></SafeAreaView>;

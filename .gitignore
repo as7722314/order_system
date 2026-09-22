@@ -79,6 +79,8 @@ web_modules/
 .env.*
 apps/*/.env
 !.env.example
+!.env.development
+!.env.production
 
 # Editor/test artifacts
 .vscode-test

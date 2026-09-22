@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { API_BASE_URL } from "../config/environment";
 import { useAdminAuthStore } from "../stores/adminAuthStore";
 
 type NewOrderEvent = {
@@ -123,8 +124,7 @@ let notificationAudio: HTMLAudioElement | null = null;
 const token = computed(() => auth.token);
 
 function buildEventUrl(value: string): string {
-  const base = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "");
-  return `${base}/admin/order-events?token=${encodeURIComponent(value)}`;
+  return `${API_BASE_URL}/admin/order-events?token=${encodeURIComponent(value)}`;
 }
 
 function connect(value: string | null): void {

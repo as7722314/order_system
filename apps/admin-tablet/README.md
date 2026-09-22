@@ -10,12 +10,22 @@
 
 ## 設定 API
 
-複製 `.env.example` 為 `.env.local`。正式版本使用公開的 HTTPS API：
+複製 `.env.example` 為 `.env.local`。未指定環境時一律安全地預設為 `local`：
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=https://line-order-system-api.onrender.com/api
+APP_ENV=local
+EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000/api
 EXPO_PUBLIC_EAS_PROJECT_ID=你的-EAS-Project-ID
 ```
+
+Android APK 必須使用明確的環境建置指令：
+
+```bash
+npm run build:android:local
+npm run build:android:production
+```
+
+兩個指令會分別輸出到 `dist/order-system-admin-tablet-local-v1.0.0.apk` 與 `dist/order-system-admin-tablet-production-v1.0.0.apk`，並檢查 APK 內嵌環境與 API 網址完全一致。正式版只有在 `APP_ENV=production` 時才能連線正式 API。
 
 ## 關閉 App 後的新訂單推播
 

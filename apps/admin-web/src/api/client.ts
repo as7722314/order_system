@@ -1,8 +1,9 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/environment";
 import type { ApiResponse, OnsiteOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report, StoreStatus } from "../types/admin";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api"
+  baseURL: API_BASE_URL
 });
 
 api.interceptors.request.use((config) => {
