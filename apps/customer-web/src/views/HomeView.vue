@@ -23,8 +23,7 @@
       <article v-for="product in products" :key="product.id" class="food-card">
         <button class="product-card-button" type="button" @click="selectedProduct = product">
           <div class="product-thumb">
-            <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
-            <span v-else>餅</span>
+            <span>餅</span>
           </div>
           <div class="product-card-body">
             <h3 class="food-title">{{ product.name }}</h3>
