@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { OrderStatus as OrderStatusType, Prisma } from "@prisma/client";
 import { broadcastNewOrderEvent } from "../services/adminOrderEventService.js";
+import { notifyAdminPushSubscribers } from "../services/adminPushNotificationService.js";
 import { notifyNewOrder } from "../services/lineOrderNotificationService.js";
 import { getStoreStatus } from "../services/storeSettingService.js";
 import { calculateOrder, ensureStatusTransition, type CatalogProduct, type OrderLineInput } from "../services/orderRules.js";
@@ -119,6 +120,9 @@ export async function createOrder(req: Request, res: Response): Promise<Response
   });
   void notifyNewOrder(result.notification).catch((error: unknown) => {
     console.warn("[line-order-notification] failed to send new order notification", error);
+  });
+  void notifyAdminPushSubscribers(result.notification).catch((error: unknown) => {
+    console.warn("[admin-push-notification] failed to send new order notification", error);
   });
   return ok(res, { orderNumber: result.orderNumber, status: result.status, totalAmount: result.totalAmount }, 201);
 }

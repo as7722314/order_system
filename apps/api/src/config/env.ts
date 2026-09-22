@@ -15,6 +15,8 @@ const envSchema = z.object({
   LINE_MESSAGING_CHANNEL_ACCESS_TOKEN: z.string().optional().default(""),
   LINE_ORDER_NOTIFICATION_TO: z.string().optional().default(""),
   LINE_ORDER_NOTIFICATION_ENABLED: z.enum(["true", "false"]).default("true"),
+  EXPO_PUSH_NOTIFICATIONS_ENABLED: z.enum(["true", "false"]).default("true"),
+  EXPO_ACCESS_TOKEN: z.string().optional().default(""),
   CUSTOMER_WEB_URL: z.string().url().default("http://localhost:5173"),
   ADMIN_WEB_URL: z.string().url().default("http://localhost:5174"),
   CLOUDFLARE_PUBLIC_URL: z.union([z.string().url(), z.literal("")]).default(""),

@@ -16,6 +16,7 @@ import {
   updateProductStatus
 } from "../controllers/adminCatalogController.js";
 import { streamAdminOrderEvents } from "../controllers/adminOrderEventController.js";
+import { registerAdminPushToken, unregisterAdminPushToken } from "../controllers/adminPushTokenController.js";
 import { cancelOrder, createAdminOnsiteOrder, deleteOrder, getAdminOrder, listAdminOrders, restoreOrder, updateOrderStatus } from "../controllers/orderController.js";
 import { createExpense, deleteExpense, listExpenses, updateExpense } from "../controllers/expenseController.js";
 import { dailyReport, monthlyReport } from "../controllers/reportController.js";
@@ -45,6 +46,7 @@ import {
   monthlyReportQuerySchema
 } from "../validators/expenseValidators.js";
 import { storeStatusSchema } from "../validators/storeSettingValidators.js";
+import { adminPushTokenSchema } from "../validators/pushTokenValidators.js";
 
 export const adminRoutes = Router();
 
@@ -54,6 +56,8 @@ adminRoutes.use(requireAuth, requireRole(UserRole.ADMIN));
 
 adminRoutes.get("/admin/store/status", asyncHandler(getAdminStoreStatus));
 adminRoutes.patch("/admin/store/status", validateBody(storeStatusSchema), asyncHandler(updateAdminStoreStatus));
+adminRoutes.post("/admin/push-tokens", validateBody(adminPushTokenSchema), asyncHandler(registerAdminPushToken));
+adminRoutes.delete("/admin/push-tokens", validateBody(adminPushTokenSchema), asyncHandler(unregisterAdminPushToken));
 
 adminRoutes.get("/admin/categories", asyncHandler(listCategories));
 adminRoutes.post("/admin/categories", validateBody(categorySchema), asyncHandler(createCategory));

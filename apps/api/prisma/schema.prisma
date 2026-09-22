@@ -33,11 +33,26 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   orders          Order[]
-  createdExpenses Expense[] @relation("ExpenseCreatedBy")
-  cancelledOrders Order[]   @relation("OrderCancelledBy")
-  deletedOrders   Order[]   @relation("OrderDeletedBy")
+  createdExpenses Expense[]        @relation("ExpenseCreatedBy")
+  cancelledOrders Order[]          @relation("OrderCancelledBy")
+  deletedOrders   Order[]          @relation("OrderDeletedBy")
+  adminPushTokens AdminPushToken[]
 
   @@map("users")
+}
+
+model AdminPushToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("admin_push_tokens")
 }
 
 model ProductCategory {
@@ -155,11 +170,11 @@ model OrderItem {
 }
 
 model OrderItemFlavor {
-  id                 String @id @default(uuid())
-  orderItemId        String @map("order_item_id")
+  id                 String  @id @default(uuid())
+  orderItemId        String  @map("order_item_id")
   flavorId           String? @map("flavor_id")
-  flavorNameSnapshot String @map("flavor_name_snapshot")
-  extraPriceSnapshot Int    @map("extra_price_snapshot")
+  flavorNameSnapshot String  @map("flavor_name_snapshot")
+  extraPriceSnapshot Int     @map("extra_price_snapshot")
 
   orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   flavor    Flavor?   @relation(fields: [flavorId], references: [id])
@@ -187,6 +202,7 @@ model Expense {
   @@index([deletedAt])
   @@map("expenses")
 }
+
 model StoreSetting {
   id        String   @id
   isOpen    Boolean  @default(true) @map("is_open")

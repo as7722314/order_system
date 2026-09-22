@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1043205317168",
+    "firebase_url": "https://barry-test-d820b-default-rtdb.firebaseio.com",
+    "project_id": "barry-test-d820b",
+    "storage_bucket": "barry-test-d820b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1043205317168:android:4cd078443534eed0c383f5",
+        "android_client_info": {
+          "package_name": "com.orderSystem.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDk9Qncn3EKWB-S2cHy_D_in9M_6Foj-EI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
