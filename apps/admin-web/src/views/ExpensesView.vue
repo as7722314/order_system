@@ -61,7 +61,7 @@
             <td class="p-3 text-stone-600">{{ item.note || "-" }}</td>
             <td class="p-3 text-right whitespace-nowrap">
               <button class="rounded-md border border-stone-300 px-3 py-2" type="button" @click="openEditModal(item)">編輯</button>
-              <button class="ml-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-red-700" type="button" @click="remove(item.id)">刪除</button>
+              <button class="ml-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-red-700" type="button" @click="remove(item)">刪除</button>
             </td>
           </tr>
           <tr v-if="items.length === 0">
@@ -71,22 +71,12 @@
       </table>
     </div>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <form class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-xl" @submit.prevent="submit">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-stone-900">{{ form.id ? "編輯成本" : "新增成本" }}</h2>
-            <p class="mt-1 text-sm text-stone-500">填寫日期、分類、名稱與金額後儲存。</p>
-          </div>
-          <button class="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700" :disabled="saving" type="button" @click="closeModal">
-            關閉
-          </button>
-        </div>
-
-        <div class="mt-5 grid gap-4 md:grid-cols-2">
+    <AdminModal :open="isModalOpen" :title="form.id ? '編輯成本' : '新增成本'" description="填寫日期、分類、名稱與金額後儲存。" :busy="saving" @close="closeModal">
+      <form id="expenses-form" @submit.prevent="submit">
+        <fieldset class="grid gap-4 md:grid-cols-2" :disabled="saving">
           <label class="grid gap-1 text-sm font-medium text-stone-700">
             日期
-            <input v-model="form.expenseDate" class="rounded-md border border-stone-300 p-3 font-normal" type="date" />
+            <input v-model="form.expenseDate" required autofocus class="rounded-md border border-stone-300 p-3 font-normal" type="date" />
           </label>
           <label class="grid gap-1 text-sm font-medium text-stone-700">
             分類
@@ -96,32 +86,34 @@
           </label>
           <label class="grid gap-1 text-sm font-medium text-stone-700">
             名稱
-            <input v-model.trim="form.name" class="rounded-md border border-stone-300 p-3 font-normal" placeholder="名稱" />
+            <input v-model.trim="form.name" required class="rounded-md border border-stone-300 p-3 font-normal" placeholder="名稱" />
           </label>
           <label class="grid gap-1 text-sm font-medium text-stone-700">
             金額
-            <input v-model.number="form.amount" class="rounded-md border border-stone-300 p-3 font-normal" min="1" placeholder="金額" type="number" />
+            <input v-model.number="form.amount" required class="rounded-md border border-stone-300 p-3 font-normal" min="1" placeholder="金額" type="number" />
           </label>
           <label class="grid gap-1 text-sm font-medium text-stone-700 md:col-span-2">
             備註
             <textarea v-model.trim="form.note" class="min-h-24 rounded-md border border-stone-300 p-3 font-normal" placeholder="備註" />
           </label>
-        </div>
-
-        <div class="mt-5 flex justify-end gap-2">
-          <button class="rounded-md border border-stone-300 px-4 py-3 font-medium text-stone-700" :disabled="saving" type="button" @click="closeModal">取消</button>
-          <button class="rounded-md bg-accent px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="saving" type="submit">
-            {{ saving ? "儲存中" : "儲存" }}
-          </button>
-        </div>
+        </fieldset>
+        <p v-if="formError" role="alert" class="admin-form-error mt-4">{{ formError }}</p>
       </form>
-    </div>
+      <template #footer>
+        <button class="admin-modal-cancel" type="button" :disabled="saving" @click="closeModal">取消</button>
+        <button class="admin-modal-submit bg-accent" form="expenses-form" type="submit" :disabled="saving">{{ saving ? "儲存中…" : "儲存" }}</button>
+      </template>
+    </AdminModal>
+    <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
 import { deleteExpense, listExpenses, saveExpense } from "../api/client";
+import AdminModal from "../components/AdminModal.vue";
+import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
+import { useConfirmation } from "../composables/useConfirmation";
 import type { Expense } from "../types/admin";
 
 const expenseCategories = ["設備", "設備費用", "日常消耗", "電費", "水費", "瓦斯費", "食材", "租金", "其他"];
@@ -131,6 +123,8 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
 const isModalOpen = ref(false);
+const formError = ref("");
+const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
 const filters = reactive({ startDate: "", endDate: "", category: "" });
 const form = ref<Partial<Expense>>({ expenseDate: today, category: "日常消耗", name: "", amount: 0, note: "" });
 
@@ -144,7 +138,7 @@ function resetForm(): void {
 
 function openCreateModal(): void {
   resetForm();
-  error.value = "";
+  formError.value = "";
   isModalOpen.value = true;
 }
 
@@ -167,7 +161,7 @@ function openEditModal(item: Expense): void {
     expenseDate: formatExpenseDate(item.expenseDate),
     category: item.category || "日常消耗"
   };
-  error.value = "";
+  formError.value = "";
   isModalOpen.value = true;
 }
 
@@ -189,8 +183,9 @@ async function load(): Promise<void> {
 }
 
 async function submit(): Promise<void> {
+  if (saving.value) return;
   saving.value = true;
-  error.value = "";
+  formError.value = "";
   try {
     await saveExpense({
       ...form.value,
@@ -200,21 +195,24 @@ async function submit(): Promise<void> {
     resetForm();
     await load();
   } catch {
-    error.value = "儲存成本資料失敗，請確認日期、分類、名稱與金額。";
+    formError.value = "儲存成本資料失敗，請確認日期、分類、名稱與金額。";
   } finally {
     saving.value = false;
   }
 }
 
-async function remove(id: string): Promise<void> {
-  const confirmed = window.confirm("確定要刪除此成本資料？");
-  if (!confirmed) return;
-  try {
-    await deleteExpense(id);
-    await load();
-  } catch {
-    error.value = "刪除成本資料失敗";
-  }
+function remove(item: Expense): void {
+  requestConfirmation({
+    title: "刪除成本",
+    description: `確定刪除「${item.name}」（NT$ ${item.amount.toLocaleString("zh-TW")}）？刪除後將不再計入成本報表。`,
+    confirmLabel: "確認刪除",
+    danger: true,
+    errorMessage: "刪除成本資料失敗，請稍後再試。",
+    action: async () => {
+      await deleteExpense(item.id);
+      await load();
+    }
+  });
 }
 
 onMounted(load);

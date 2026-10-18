@@ -107,76 +107,67 @@
     <p v-if="message" class="mt-3 text-sm text-emerald-700">{{ message }}</p>
     <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
 
-    <div v-if="onsiteOpen" class="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-6">
-      <form class="mx-auto w-full max-w-4xl rounded-lg bg-white p-5 shadow-xl" @submit.prevent="submitOnsite">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-stone-900">現場點餐</h2>
-            <p class="mt-1 text-sm text-stone-500">送出後會直接建立製作中訂單，後續可照原本流程轉為可取餐、已完成。</p>
-          </div>
-          <button class="rounded-full p-2 text-stone-500 hover:bg-stone-100" title="關閉" type="button" @click="closeOnsiteModal">
-            <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="mt-5 space-y-3">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-semibold text-stone-900">商品明細</h3>
-            <button class="rounded-md border border-stone-300 px-3 py-2 text-sm" type="button" @click="addOnsiteLine">新增品項</button>
-          </div>
-
-          <section v-for="line in onsiteLines" :key="line.localId" class="rounded-lg border border-stone-200 p-4">
-            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem] lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
-              <label class="grid gap-1 text-sm font-medium text-stone-700">
-                商品
-                <select v-model="line.productId" class="rounded-md border border-stone-300 p-3 font-normal" @change="resetOnsiteLineFlavors(line)">
-                  <option value="">請選擇商品</option>
-                  <option v-for="product in activeProducts" :key="product.id" :value="product.id">{{ product.name }} / NT$ {{ product.price }}</option>
-                </select>
-              </label>
-              <label class="grid gap-1 text-sm font-medium text-stone-700">
-                數量
-                <input v-model.number="line.quantity" class="w-full rounded-md border border-stone-300 p-3 font-normal" min="1" type="number" />
-              </label>
-              <button class="self-end rounded-md border border-red-300 px-3 py-3 text-sm font-medium text-red-700 md:col-span-2 lg:col-span-1" :disabled="onsiteLines.length === 1" type="button" @click="removeOnsiteLine(line.localId)">移除</button>
+    <AdminModal :open="onsiteOpen" title="現場點餐" description="送出後會直接建立製作中訂單，後續可轉為可取餐、已完成。" :busy="savingOnsite" size="lg" @close="closeOnsiteModal">
+      <form id="onsite-form" @submit.prevent="submitOnsite">
+        <fieldset :disabled="savingOnsite">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="font-semibold text-stone-900">商品明細</h3>
+              <button class="rounded-md border border-stone-300 px-3 py-2 text-sm" type="button" @click="addOnsiteLine">新增品項</button>
             </div>
 
-            <div v-if="line.productId" class="mt-3">
-              <p class="mb-2 text-sm font-medium text-stone-700">口味，最多 2 個</p>
-              <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <label v-for="flavor in flavorOptionsForProduct(line.productId)" :key="flavor.id" class="flex items-center gap-2 rounded-md border border-stone-200 p-3 text-sm">
-                  <input :checked="line.flavorIds.includes(flavor.id)" type="checkbox" @change="toggleOnsiteFlavor(line, flavor.id, $event)" />
-                  <span>{{ flavor.name }} <span v-if="flavor.extraPrice">+{{ flavor.extraPrice }}</span></span>
+            <section v-for="line in onsiteLines" :key="line.localId" class="rounded-lg border border-stone-200 p-4">
+              <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem] lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
+                <label class="grid gap-1 text-sm font-medium text-stone-700">
+                  商品
+                  <select v-model="line.productId" data-modal-initial-focus class="rounded-md border border-stone-300 p-3 font-normal" @change="resetOnsiteLineFlavors(line)">
+                    <option value="">請選擇商品</option>
+                    <option v-for="product in activeProducts" :key="product.id" :value="product.id">{{ product.name }} / NT$ {{ product.price }}</option>
+                  </select>
                 </label>
+                <label class="grid gap-1 text-sm font-medium text-stone-700">
+                  數量
+                  <input v-model.number="line.quantity" class="w-full rounded-md border border-stone-300 p-3 font-normal" min="1" type="number" />
+                </label>
+                <button class="self-end rounded-md border border-red-300 px-3 py-3 text-sm font-medium text-red-700 md:col-span-2 lg:col-span-1" :disabled="onsiteLines.length === 1" type="button" @click="removeOnsiteLine(line.localId)">移除</button>
               </div>
-              <p v-if="flavorOptionsForProduct(line.productId).length === 0" class="text-sm text-stone-500">此商品目前沒有可選口味。</p>
-            </div>
 
-            <div class="mt-3 flex justify-end">
-              <p class="text-sm font-semibold text-stone-900">小計 NT$ {{ lineSubtotal(line) }}</p>
-            </div>
-          </section>
-        </div>
+              <div v-if="line.productId" class="mt-3">
+                <p class="mb-2 text-sm font-medium text-stone-700">口味，最多 2 個</p>
+                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <label v-for="flavor in flavorOptionsForProduct(line.productId)" :key="flavor.id" class="flex items-center gap-2 rounded-md border border-stone-200 p-3 text-sm">
+                    <input :checked="line.flavorIds.includes(flavor.id)" type="checkbox" @change="toggleOnsiteFlavor(line, flavor.id, $event)" />
+                    <span>{{ flavor.name }} <span v-if="flavor.extraPrice">+{{ flavor.extraPrice }}</span></span>
+                  </label>
+                </div>
+                <p v-if="flavorOptionsForProduct(line.productId).length === 0" class="text-sm text-stone-500">此商品目前沒有可選口味。</p>
+              </div>
 
-        <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-4">
-          <p class="text-lg font-semibold text-stone-900">總計 NT$ {{ onsiteTotal }}</p>
-          <div class="flex gap-2">
-            <button class="rounded-md border border-stone-300 px-4 py-3" type="button" @click="closeOnsiteModal">取消</button>
-            <button class="rounded-md bg-accent px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="savingOnsite || activeProducts.length === 0">{{ savingOnsite ? "送出中" : "送出現場點餐" }}</button>
+              <div class="mt-3 flex justify-end">
+                <p class="text-sm font-semibold text-stone-900">小計 NT$ {{ lineSubtotal(line) }}</p>
+              </div>
+            </section>
           </div>
-        </div>
-        <p v-if="onsiteError" class="mt-3 text-sm text-red-600">{{ onsiteError }}</p>
+
+        </fieldset>
+        <p v-if="onsiteError" role="alert" class="admin-form-error mt-4">{{ onsiteError }}</p>
       </form>
-    </div>
+      <template #footer>
+        <p class="mr-auto text-lg font-semibold">總計 NT$ {{ onsiteTotal }}</p>
+        <button class="admin-modal-cancel" type="button" :disabled="savingOnsite" @click="closeOnsiteModal">取消</button>
+        <button class="admin-modal-submit bg-accent" form="onsite-form" type="submit" :disabled="savingOnsite || activeProducts.length === 0">{{ savingOnsite ? "送出中…" : "送出現場點餐" }}</button>
+      </template>
+    </AdminModal>
+    <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" @update:reason="confirmation.reason = $event" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { cancelOrder, createOnsiteOrder, deleteOrder, listFlavors, listOrders, listProducts, restoreOrder, updateOrderStatus } from "../api/client";
+import AdminModal from "../components/AdminModal.vue";
+import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
+import { useConfirmation } from "../composables/useConfirmation";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Flavor, Order, OrderStatus, Product } from "../types/admin";
 import { canCancel, statusActions } from "../utils/orderStatusActions";
@@ -200,6 +191,7 @@ const error = ref("");
 const message = ref("");
 const onsiteError = ref("");
 const onsiteLines = ref<OnsiteLine[]>([]);
+const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
 
 const activeProducts = computed(() => products.value.filter((product) => product.isActive));
 const activeFlavors = computed(() => flavors.value.filter((flavor) => flavor.isActive));
@@ -322,53 +314,44 @@ async function changeStatus(id: string, status: OrderStatus): Promise<void> {
   }
 }
 
-async function cancel(order: Order): Promise<void> {
-  const confirmed = window.confirm(`確定要取消訂單「${order.orderNumber}」？`);
-  if (!confirmed) return;
-  loading.value = true;
-  error.value = "";
-  try {
-    await cancelOrder(order.id, "管理者取消");
-    await load();
-  } catch {
-    error.value = "取消訂單失敗";
-    loading.value = false;
-  }
+function cancel(order: Order): void {
+  requestConfirmation({
+    title: "取消訂單",
+    description: `確定取消訂單「${order.orderNumber}」？取消後將停止處理此訂單。`,
+    confirmLabel: "確認取消訂單", danger: true, errorMessage: "取消訂單失敗，請稍後再試。",
+    action: async () => {
+      await cancelOrder(order.id, "管理者取消");
+      await load();
+    }
+  });
 }
 
-async function softDelete(order: Order): Promise<void> {
-  const firstConfirmed = window.confirm(`確定要刪除訂單「${order.orderNumber}」？刪除後會先移到已刪除區。`);
-  if (!firstConfirmed) return;
-  const reason = window.prompt("請輸入刪除原因，可留空。按取消會中止刪除。", "");
-  if (reason === null) return;
-  const secondConfirmed = window.confirm(`最後確認：要刪除訂單「${order.orderNumber}」嗎？`);
-  if (!secondConfirmed) return;
-  loading.value = true;
-  error.value = "";
-  try {
-    await deleteOrder(order.id, reason.trim() || undefined);
-    await load();
-  } catch {
-    error.value = "刪除訂單失敗";
-    loading.value = false;
-  }
+function softDelete(order: Order): void {
+  requestConfirmation({
+    title: "刪除訂單",
+    description: `確定刪除訂單「${order.orderNumber}」？訂單會移到「已刪除」區，之後可以復原。`,
+    confirmLabel: "確認刪除", danger: true, reasonLabel: "刪除原因（選填）", errorMessage: "刪除訂單失敗，請稍後再試。",
+    action: async (reason) => {
+      await deleteOrder(order.id, reason || undefined);
+      await load();
+    }
+  });
 }
 
-async function restore(order: Order): Promise<void> {
-  const confirmed = window.confirm(`確定要復原訂單「${order.orderNumber}」？`);
-  if (!confirmed) return;
-  loading.value = true;
-  error.value = "";
-  try {
-    await restoreOrder(order.id);
-    await load();
-  } catch {
-    error.value = "復原訂單失敗";
-    loading.value = false;
-  }
+function restore(order: Order): void {
+  requestConfirmation({
+    title: "復原訂單",
+    description: `確定復原訂單「${order.orderNumber}」？訂單會回到一般訂單列表。`,
+    confirmLabel: "確認復原", errorMessage: "復原訂單失敗，請稍後再試。",
+    action: async () => {
+      await restoreOrder(order.id);
+      await load();
+    }
+  });
 }
 
 async function submitOnsite(): Promise<void> {
+  if (savingOnsite.value) return;
   onsiteError.value = "";
   const validLines = onsiteLines.value.filter((line) => line.productId && Number(line.quantity) > 0);
   if (validLines.length === 0) {

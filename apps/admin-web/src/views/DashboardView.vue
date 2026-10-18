@@ -22,12 +22,15 @@
 
     <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="clock" />待接單明細</h2><span class="admin-count-badge">{{ pendingOrders.length }} 筆</span></div><OrderDetailList interactive :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" /></section>
     <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="orders" />今日訂單明細</h2><span class="admin-count-badge">{{ todayOrders.length }} 筆</span></div><OrderDetailList :orders="todayOrders" empty-text="今天尚無訂單" /></section>
+    <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, ref } from "vue";
 import { cancelOrder, dailyReport, getStoreStatus, listOrders, updateOrderStatus, updateStoreStatus } from "../api/client";
+import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
+import { useConfirmation } from "../composables/useConfirmation";
 import AdminIcon from "../components/AdminIcon.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderItem, OrderStatus, StoreStatus } from "../types/admin";
@@ -58,6 +61,7 @@ const storeStatus = ref<StoreStatus | null>(null);
 const loading = ref(false);
 const savingStoreStatus = ref(false);
 const error = ref("");
+const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
 
 const cards = computed(() => [
   { label: "今日完成訂單", value: String(report.value.orderCount), icon: "orders", caption: "依完成時間統計" },
@@ -125,18 +129,16 @@ async function changeStatus(id: string, status: OrderStatus): Promise<void> {
   }
 }
 
-async function cancel(order: Order): Promise<void> {
-  const confirmed = window.confirm(`確定要取消訂單「${order.orderNumber}」？`);
-  if (!confirmed) return;
-  loading.value = true;
-  error.value = "";
-  try {
-    await cancelOrder(order.id, "管理者取消");
-    await load();
-  } catch {
-    error.value = "取消訂單失敗";
-    loading.value = false;
-  }
+function cancel(order: Order): void {
+  requestConfirmation({
+    title: "取消訂單",
+    description: `確定取消訂單「${order.orderNumber}」？取消後將停止處理此訂單。`,
+    confirmLabel: "確認取消訂單", danger: true, errorMessage: "取消訂單失敗，請稍後再試。",
+    action: async () => {
+      await cancelOrder(order.id, "管理者取消");
+      await load();
+    }
+  });
 }
 
 const OrderDetailList = defineComponent({
