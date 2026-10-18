@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import AdminIcon from "./AdminIcon.vue";
+import { registerFeedbackDialog, unregisterFeedbackDialog } from "../composables/useAdminFeedback";
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -68,14 +69,17 @@ watch(() => props.open, async (open) => {
     previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog.value.showModal();
+    registerFeedbackDialog(id, dialog.value);
     dialog.value.querySelector<HTMLElement>("[autofocus], [data-modal-initial-focus]")?.focus();
   } else if (!open) {
+    unregisterFeedbackDialog(id);
     dialog.value.close();
     unlockScroll();
   }
 }, { immediate: true, flush: "post" });
 
 onBeforeUnmount(() => {
+  unregisterFeedbackDialog(id);
   dialog.value?.close();
   unlockScroll();
 });

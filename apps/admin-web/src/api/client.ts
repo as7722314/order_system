@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/environment";
-import type { ApiResponse, OnsiteOrderPayload, Category, Expense, Flavor, Order, OrderStatus, Product, Report, StoreStatus } from "../types/admin";
+import type { ApiResponse, OnsiteOrderPayload, Category, DashboardChartData, Expense, Flavor, MonthlyReport, Order, OrderStatus, Product, Report, StoreStatus } from "../types/admin";
 
 export const api = axios.create({
   baseURL: API_BASE_URL
@@ -61,7 +61,7 @@ export async function listProducts(): Promise<Product[]> {
   return response.data.data;
 }
 
-export async function saveProduct(payload: Partial<Product> & { flavorIds?: string[] }): Promise<void> {
+export async function saveProduct(payload: Partial<Product> & { flavorIds?: string[] }): Promise<Product> {
   const body = {
     name: payload.name ?? "",
     description: payload.description ?? "",
@@ -70,8 +70,8 @@ export async function saveProduct(payload: Partial<Product> & { flavorIds?: stri
     isActive: payload.isActive ?? true,
     flavorIds: payload.flavorIds ?? []
   };
-  if (payload.id) await api.put(`/admin/products/${payload.id}`, body);
-  else await api.post("/admin/products", body);
+  const response = payload.id ? await api.put<ApiResponse<Product>>(`/admin/products/${payload.id}`, body) : await api.post<ApiResponse<Product>>("/admin/products", body);
+  return response.data.data;
 }
 
 export async function deleteProduct(id: string): Promise<void> {
@@ -83,9 +83,9 @@ export async function listFlavors(): Promise<Flavor[]> {
   return response.data.data;
 }
 
-export async function saveFlavor(payload: Partial<Flavor>): Promise<void> {
-  if (payload.id) await api.put(`/admin/flavors/${payload.id}`, payload);
-  else await api.post("/admin/flavors", payload);
+export async function saveFlavor(payload: Partial<Flavor>): Promise<Flavor> {
+  const response = payload.id ? await api.put<ApiResponse<Flavor>>(`/admin/flavors/${payload.id}`, payload) : await api.post<ApiResponse<Flavor>>("/admin/flavors", payload);
+  return response.data.data;
 }
 
 export type OrderListParams = {
@@ -136,9 +136,9 @@ export async function listExpenses(params: ExpenseListParams = {}): Promise<Expe
   return response.data.data.items;
 }
 
-export async function saveExpense(payload: Partial<Expense>): Promise<void> {
-  if (payload.id) await api.put(`/admin/expenses/${payload.id}`, payload);
-  else await api.post("/admin/expenses", payload);
+export async function saveExpense(payload: Partial<Expense>): Promise<Expense> {
+  const response = payload.id ? await api.put<ApiResponse<Expense>>(`/admin/expenses/${payload.id}`, payload) : await api.post<ApiResponse<Expense>>("/admin/expenses", payload);
+  return response.data.data;
 }
 
 export async function deleteExpense(id: string): Promise<void> {
@@ -150,7 +150,12 @@ export async function dailyReport(date: string): Promise<Report> {
   return response.data.data;
 }
 
-export async function monthlyReport(month: string): Promise<Report & { month: string; daily: { date: string; revenue: number; expense: number }[] }> {
-  const response = await api.get<ApiResponse<Report & { month: string; daily: { date: string; revenue: number; expense: number }[] }>>("/admin/reports/monthly", { params: { month } });
+export async function monthlyReport(month: string): Promise<MonthlyReport> {
+  const response = await api.get<ApiResponse<MonthlyReport>>("/admin/reports/monthly", { params: { month } });
+  return response.data.data;
+}
+
+export async function dashboardCharts(date: string): Promise<DashboardChartData> {
+  const response = await api.get<ApiResponse<DashboardChartData>>("/admin/reports/dashboard", { params: { date } });
   return response.data.data;
 }

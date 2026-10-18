@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import { useAdminFeedback } from "./useAdminFeedback";
 
 type ConfirmationOptions = {
   title: string;
@@ -44,7 +45,7 @@ export function useConfirmation() {
   }
 
   async function confirmAction(): Promise<void> {
-    if (!current || confirmation.busy) return;
+    if (!current || !confirmation.open || confirmation.busy) return;
     confirmation.busy = true;
     confirmation.error = "";
     try {
@@ -52,6 +53,7 @@ export function useConfirmation() {
       confirmation.open = false;
     } catch {
       confirmation.error = current.errorMessage;
+      useAdminFeedback().error(current.errorMessage);
     } finally {
       confirmation.busy = false;
     }

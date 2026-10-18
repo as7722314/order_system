@@ -97,6 +97,18 @@ export type Report = {
   totalExpense: number;
 };
 
+export type ReportDay = { date: string; revenue: number; expense?: number };
+export type MonthlyReport = Report & {
+  month: string;
+  daily: { date: string; revenue: number; expense: number }[];
+  expenseCategories: { category: string; amount: number; count: number }[];
+};
+export type DashboardChartData = {
+  date: string;
+  daily: ReportDay[];
+  orderStatuses: { status: OrderStatus; count: number }[];
+};
+
 export type StoreStatus = {
   isOpen: boolean;
   updatedAt: string;

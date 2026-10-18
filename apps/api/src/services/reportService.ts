@@ -53,7 +53,7 @@ export async function getMonthlyReport(month: string) {
         expenseDate: { gte: expenseRange.start, lt: expenseRange.end },
         deletedAt: null
       },
-      select: { amount: true, expenseDate: true }
+      select: { amount: true, expenseDate: true, category: true }
     })
   ]);
 
@@ -73,11 +73,20 @@ export async function getMonthlyReport(month: string) {
 
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const categories = new Map<string, { category: string; amount: number; count: number }>();
+  for (const expense of expenses) {
+    const category = expense.category;
+    const row = categories.get(category) ?? { category, amount: 0, count: 0 };
+    row.amount += expense.amount;
+    row.count += 1;
+    categories.set(category, row);
+  }
   return {
     month,
     orderCount: orders.length,
     totalRevenue,
     totalExpense,
+    expenseCategories: [...categories.values()].sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category)),
     daily: range.days.map((date) => {
       const row = byDate.get(date) ?? { revenue: 0, expense: 0 };
       return {
@@ -86,5 +95,35 @@ export async function getMonthlyReport(month: string) {
         expense: row.expense
       };
     })
+  };
+}
+
+export async function getDashboardCharts(date: string) {
+  const day = taipeiDayRange(date);
+  const start = day.start.addDays(-29);
+  const dates = Array.from({ length: 30 }, (_, index) => formatTaipeiDate(start.addDays(index)));
+  const [orders, statuses] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: OrderStatus.COMPLETED, deletedAt: null, completedAt: { gte: start, lt: day.end } },
+      select: { totalAmount: true, completedAt: true }
+    }),
+    prisma.order.groupBy({
+      by: ["status"],
+      where: { deletedAt: null, createdAt: { gte: day.start, lt: day.end } },
+      _count: { _all: true }
+    })
+  ]);
+  const revenue = new Map(dates.map((key) => [key, 0]));
+  for (const order of orders) {
+    if (!order.completedAt) continue;
+    const key = formatTaipeiDate(order.completedAt);
+    if (revenue.has(key)) revenue.set(key, (revenue.get(key) ?? 0) + order.totalAmount);
+  }
+  return {
+    date,
+    daily: dates.map((key) => ({ date: key, revenue: revenue.get(key) ?? 0 })),
+    orderStatuses: Object.values(OrderStatus).map((status) => ({
+      status, count: statuses.find((row) => row.status === status)?._count._all ?? 0
+    }))
   };
 }

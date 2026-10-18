@@ -9,7 +9,7 @@
         <button class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white" type="button" @click="openCreateModal">
           新增成本
         </button>
-        <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" type="button" @click="load">
+        <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" :aria-busy="loading" type="button" @click="load">
           {{ loading ? "讀取中" : "重新整理" }}
         </button>
       </div>
@@ -53,7 +53,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in items" :key="item.id" class="border-b border-stone-100">
+          <tr v-for="item in items" :key="item.id" class="border-b border-stone-100" :class="{ 'admin-row-updated': feedback.isHighlighted(item.id) }">
             <td class="p-3 whitespace-nowrap">{{ formatExpenseDate(item.expenseDate) }}</td>
             <td class="p-3">{{ item.category }}</td>
             <td class="p-3 font-medium text-stone-900">{{ item.name }}</td>
@@ -101,7 +101,7 @@
       </form>
       <template #footer>
         <button class="admin-modal-cancel" type="button" :disabled="saving" @click="closeModal">取消</button>
-        <button class="admin-modal-submit bg-accent" form="expenses-form" type="submit" :disabled="saving">{{ saving ? "儲存中…" : "儲存" }}</button>
+        <button class="admin-modal-submit bg-accent" form="expenses-form" type="submit" :disabled="saving" :aria-busy="saving">{{ saving ? "儲存中…" : "儲存" }}</button>
       </template>
     </AdminModal>
     <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" />
@@ -110,6 +110,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
+import { useAdminFeedback } from "../composables/useAdminFeedback";
 import { deleteExpense, listExpenses, saveExpense } from "../api/client";
 import AdminModal from "../components/AdminModal.vue";
 import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
@@ -122,6 +123,7 @@ const items = ref<Expense[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
+const feedback = useAdminFeedback();
 const isModalOpen = ref(false);
 const formError = ref("");
 const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
@@ -186,16 +188,20 @@ async function submit(): Promise<void> {
   if (saving.value) return;
   saving.value = true;
   formError.value = "";
+  const wasEditing = Boolean(form.value.id);
   try {
-    await saveExpense({
+    const saved = await saveExpense({
       ...form.value,
       category: form.value.category || "日常消耗"
     });
     isModalOpen.value = false;
     resetForm();
     await load();
+    feedback.highlight(saved.id);
+    feedback.success(wasEditing ? "成本已儲存" : "成本已新增");
   } catch {
     formError.value = "儲存成本資料失敗，請確認日期、分類、名稱與金額。";
+    feedback.error(formError.value);
   } finally {
     saving.value = false;
   }
@@ -211,6 +217,7 @@ function remove(item: Expense): void {
     action: async () => {
       await deleteExpense(item.id);
       await load();
+      feedback.success("成本已刪除");
     }
   });
 }

@@ -19,7 +19,7 @@ import { streamAdminOrderEvents } from "../controllers/adminOrderEventController
 import { registerAdminPushToken, unregisterAdminPushToken } from "../controllers/adminPushTokenController.js";
 import { cancelOrder, createAdminOnsiteOrder, deleteOrder, getAdminOrder, listAdminOrders, restoreOrder, updateOrderStatus } from "../controllers/orderController.js";
 import { createExpense, deleteExpense, listExpenses, updateExpense } from "../controllers/expenseController.js";
-import { dailyReport, monthlyReport } from "../controllers/reportController.js";
+import { dailyReport, dashboardCharts, monthlyReport } from "../controllers/reportController.js";
 import { getAdminStoreStatus, updateAdminStoreStatus } from "../controllers/storeSettingController.js";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { validateBody, validateQuery } from "../middlewares/validate.js";
@@ -91,3 +91,4 @@ adminRoutes.delete("/admin/expenses/:id", asyncHandler(deleteExpense));
 
 adminRoutes.get("/admin/reports/daily", validateQuery(dailyReportQuerySchema), asyncHandler(dailyReport));
 adminRoutes.get("/admin/reports/monthly", validateQuery(monthlyReportQuerySchema), asyncHandler(monthlyReport));
+adminRoutes.get("/admin/reports/dashboard", validateQuery(dailyReportQuerySchema), asyncHandler(dashboardCharts));

@@ -2,7 +2,7 @@
   <main class="p-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div><p class="admin-eyebrow">門市日常</p><h1 class="text-2xl font-semibold">今日營運概況</h1><p class="mt-2 text-sm text-stone-500">掌握接單進度、營業額與成本紀錄。</p></div>
-      <button class="flex items-center gap-2 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" @click="load"><AdminIcon name="refresh" class="h-4 w-4" />{{ loading ? "讀取中" : "重新整理" }}</button>
+      <button class="flex items-center gap-2 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" :aria-busy="loading" @click="load"><AdminIcon name="refresh" class="h-4 w-4" />{{ loading ? "讀取中" : "重新整理" }}</button>
     </div>
 
     <section class="admin-store-banner" :class="{ 'is-closed': !storeStatus?.isOpen }">
@@ -11,7 +11,7 @@
           <div class="admin-store-symbol"><AdminIcon name="store" /></div>
           <div><p class="text-xs text-stone-600">線上點餐狀態</p><h2 class="admin-store-title"><i class="admin-status-dot" aria-hidden="true"></i>{{ storeStatus?.isOpen ? "營業中" : "暫停點餐" }}</h2><p v-if="storeStatus" class="text-xs text-stone-500">最後更新 {{ formatDateTime(storeStatus.updatedAt) }}</p></div>
         </div>
-        <button class="rounded-md px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :class="storeStatus?.isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'" :disabled="loading || savingStoreStatus || !storeStatus" type="button" @click="toggleStoreStatus">{{ savingStoreStatus ? "更新中" : storeStatus?.isOpen ? "暫停點餐" : "開始營業" }}</button>
+        <button class="rounded-md px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :class="storeStatus?.isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'" :disabled="loading || savingStoreStatus || !storeStatus" :aria-busy="savingStoreStatus" type="button" @click="toggleStoreStatus">{{ savingStoreStatus ? "更新中" : storeStatus?.isOpen ? "暫停點餐" : "開始營業" }}</button>
       </div>
     </section>
 
@@ -20,14 +20,17 @@
     </div>
     <p v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ error }}</p>
 
-    <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="clock" />待接單明細</h2><span class="admin-count-badge">{{ pendingOrders.length }} 筆</span></div><OrderDetailList interactive :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" /></section>
+    <DashboardCharts v-if="initialLoadDone" :date="today" :refresh-key="chartRefresh" />
+
+    <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="clock" />待接單明細</h2><span class="admin-count-badge">{{ pendingOrders.length }} 筆</span></div><OrderDetailList interactive :busy-order-id="busyOrderId" :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" /></section>
     <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="orders" />今日訂單明細</h2><span class="admin-count-badge">{{ todayOrders.length }} 筆</span></div><OrderDetailList :orders="todayOrders" empty-text="今天尚無訂單" /></section>
     <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" />
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref } from "vue";
+import { computed, defineAsyncComponent, defineComponent, h, onMounted, ref } from "vue";
+import { useAdminFeedback } from "../composables/useAdminFeedback";
 import { cancelOrder, dailyReport, getStoreStatus, listOrders, updateOrderStatus, updateStoreStatus } from "../api/client";
 import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
 import { useConfirmation } from "../composables/useConfirmation";
@@ -35,6 +38,8 @@ import AdminIcon from "../components/AdminIcon.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderItem, OrderStatus, StoreStatus } from "../types/admin";
 import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
+
+const DashboardCharts = defineAsyncComponent(() => import("../components/DashboardCharts.vue"));
 
 const formatter = new Intl.DateTimeFormat("sv-SE", {
   timeZone: "Asia/Taipei",
@@ -59,8 +64,12 @@ const pendingOrders = ref<Order[]>([]);
 const report = ref({ orderCount: 0, totalRevenue: 0, totalExpense: 0 });
 const storeStatus = ref<StoreStatus | null>(null);
 const loading = ref(false);
+const busyOrderId = ref("");
 const savingStoreStatus = ref(false);
 const error = ref("");
+const feedback = useAdminFeedback();
+const initialLoadDone = ref(false);
+const chartRefresh = ref(0);
 const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
 
 const cards = computed(() => [
@@ -101,6 +110,8 @@ async function load(): Promise<void> {
     error.value = "讀取儀表板資料失敗";
   } finally {
     loading.value = false;
+    initialLoadDone.value = true;
+    chartRefresh.value++;
   }
 }
 
@@ -110,22 +121,31 @@ async function toggleStoreStatus(): Promise<void> {
   error.value = "";
   try {
     storeStatus.value = await updateStoreStatus(!storeStatus.value.isOpen);
+    feedback.success(storeStatus.value.isOpen ? "已開始營業" : "已暫停點餐");
   } catch {
     error.value = "更新營業狀態失敗";
+    feedback.error(error.value);
   } finally {
     savingStoreStatus.value = false;
   }
 }
 
 async function changeStatus(id: string, status: OrderStatus): Promise<void> {
+  if (loading.value) return;
+  busyOrderId.value = id;
   loading.value = true;
   error.value = "";
   try {
     await updateOrderStatus(id, status);
     await load();
+    feedback.highlight(id);
+    feedback.success("訂單狀態已更新");
   } catch {
     error.value = "更新訂單狀態失敗";
+    feedback.error(error.value);
     loading.value = false;
+  } finally {
+    busyOrderId.value = "";
   }
 }
 
@@ -137,6 +157,8 @@ function cancel(order: Order): void {
     action: async () => {
       await cancelOrder(order.id, "管理者取消");
       await load();
+      feedback.highlight(order.id);
+      feedback.success(`訂單「${order.orderNumber}」已取消`);
     }
   });
 }
@@ -147,7 +169,8 @@ const OrderDetailList = defineComponent({
     orders: { type: Array as () => Order[], required: true },
     emptyText: { type: String, required: true },
     disabled: { type: Boolean, default: false },
-    interactive: { type: Boolean, default: false }
+    interactive: { type: Boolean, default: false },
+    busyOrderId: { type: String, default: "" }
   },
   emits: {
     changeStatus: (_id: string, _status: OrderStatus) => true,
@@ -164,7 +187,7 @@ const OrderDetailList = defineComponent({
         const cancelable = canCancel(order.status);
         return h("article", {
           key: order.id,
-          class: "rounded-lg border border-stone-200 bg-white p-4 shadow-sm"
+          class: ["rounded-lg border border-stone-200 bg-white p-4 shadow-sm", { "admin-row-updated": feedback.isHighlighted(order.id) }]
         }, [
           h("div", { class: "flex flex-wrap items-start justify-between gap-3" }, [
             h("div", [
@@ -193,6 +216,7 @@ const OrderDetailList = defineComponent({
               key: action.status,
               class: `rounded-md px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${action.className}`,
               disabled: props.disabled,
+              "aria-busy": props.busyOrderId === order.id,
               onClick: () => emit("changeStatus", order.id, action.status)
             }, action.label)),
             cancelable ? h("button", {

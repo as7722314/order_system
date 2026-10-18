@@ -5,7 +5,6 @@
       <button class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50" :disabled="loading" @click="openCreateModal">新增商品</button>
     </div>
 
-    <p v-if="message" role="status" class="mt-4 text-sm text-stone-600">{{ message }}</p>
     <p v-if="error" role="alert" class="admin-form-error mt-4">{{ error }}</p>
 
     <div class="admin-table-wrap mt-5"><table class="w-full overflow-hidden rounded-lg bg-white text-left text-sm">
@@ -20,7 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id" class="border-b border-stone-100">
+        <tr v-for="item in items" :key="item.id" class="border-b border-stone-100" :class="{ 'admin-row-updated': feedback.isHighlighted(item.id) }">
           <td class="p-3">
             <div class="font-medium">{{ item.name }}</div>
             <div class="mt-1 text-xs text-stone-500">{{ item.description }}</div>
@@ -59,7 +58,7 @@
       </form>
       <template #footer>
         <button class="admin-modal-cancel" type="button" :disabled="saving" @click="closeModal">取消</button>
-        <button class="admin-modal-submit bg-accent" form="products-form" type="submit" :disabled="saving">{{ saving ? "儲存中…" : form.id ? "儲存變更" : "新增商品" }}</button>
+        <button class="admin-modal-submit bg-accent" form="products-form" type="submit" :disabled="saving" :aria-busy="saving">{{ saving ? "儲存中…" : form.id ? "儲存變更" : "新增商品" }}</button>
       </template>
     </AdminModal>
     <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" />
@@ -68,6 +67,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useAdminFeedback } from "../composables/useAdminFeedback";
 import { deleteProduct, listFlavors, listProducts, saveProduct } from "../api/client";
 import AdminModal from "../components/AdminModal.vue";
 import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
@@ -83,8 +83,8 @@ const isModalOpen = ref(false);
 const saving = ref(false);
 const formError = ref("");
 const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
-const message = ref("");
 const error = ref("");
+const feedback = useAdminFeedback();
 const form = ref<Partial<Product>>({ name: "", price: 0, sortOrder: 0, isActive: true, description: "" });
 
 function allActiveFlavorIds(): string[] {
@@ -99,7 +99,6 @@ function resetForm(): void {
 
 function openCreateModal(): void {
   resetForm();
-  message.value = "";
   isModalOpen.value = true;
 }
 
@@ -112,7 +111,6 @@ function closeModal(): void {
 function edit(item: Product): void {
   form.value = { ...item, categoryId: undefined };
   selectedFlavorIds.value = item.productFlavors?.map((productFlavor) => productFlavor.flavorId) ?? allActiveFlavorIds();
-  message.value = "";
   formError.value = "";
   isModalOpen.value = true;
 }
@@ -142,13 +140,15 @@ async function submit(): Promise<void> {
   formError.value = "";
   const wasEditing = Boolean(form.value.id);
   try {
-    await saveProduct({ ...form.value, flavorIds: selectedFlavorIds.value });
+    const saved = await saveProduct({ ...form.value, flavorIds: selectedFlavorIds.value });
     isModalOpen.value = false;
     resetForm();
-    message.value = wasEditing ? "商品已儲存" : "商品已新增";
     await load();
+    feedback.highlight(saved.id);
+    feedback.success(wasEditing ? "商品已儲存" : "商品已新增");
   } catch {
     formError.value = "商品儲存失敗，請確認商品名稱、售價與口味設定。";
+    feedback.error(formError.value);
   } finally {
     saving.value = false;
   }
@@ -163,8 +163,8 @@ function remove(item: Product): void {
     errorMessage: "刪除商品失敗，請稍後再試。",
     action: async () => {
       await deleteProduct(item.id);
-      message.value = "商品已刪除";
       await load();
+      feedback.success("商品已刪除");
     }
   });
 }

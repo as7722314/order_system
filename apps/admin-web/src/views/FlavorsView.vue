@@ -5,7 +5,6 @@
       <button class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white" @click="openCreateModal">新增口味</button>
     </div>
 
-    <p v-if="message" role="status" class="mt-4 text-sm text-stone-600">{{ message }}</p>
     <p v-if="error" role="alert" class="admin-form-error mt-4">{{ error }}</p>
 
     <div class="admin-table-wrap mt-5"><table class="w-full rounded-lg bg-white text-left text-sm">
@@ -19,7 +18,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id" class="border-b border-stone-100">
+        <tr v-for="item in items" :key="item.id" class="border-b border-stone-100" :class="{ 'admin-row-updated': feedback.isHighlighted(item.id) }">
           <td class="p-3 font-medium">{{ item.name }}</td>
           <td class="p-3">NT$ {{ item.extraPrice }}</td>
           <td class="p-3">{{ item.sortOrder }}</td>
@@ -42,7 +41,7 @@
       </form>
       <template #footer>
         <button class="admin-modal-cancel" type="button" :disabled="saving" @click="closeModal">取消</button>
-        <button class="admin-modal-submit bg-accent" form="flavors-form" type="submit" :disabled="saving">{{ saving ? "儲存中…" : form.id ? "儲存變更" : "新增口味" }}</button>
+        <button class="admin-modal-submit bg-accent" form="flavors-form" type="submit" :disabled="saving" :aria-busy="saving">{{ saving ? "儲存中…" : form.id ? "儲存變更" : "新增口味" }}</button>
       </template>
     </AdminModal>
   </main>
@@ -50,6 +49,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useAdminFeedback } from "../composables/useAdminFeedback";
 import { listFlavors, saveFlavor } from "../api/client";
 import AdminModal from "../components/AdminModal.vue";
 import type { Flavor } from "../types/admin";
@@ -59,8 +59,8 @@ const form = ref<Partial<Flavor>>({ name: "", extraPrice: 0, sortOrder: 0, isAct
 const isModalOpen = ref(false);
 const saving = ref(false);
 const formError = ref("");
-const message = ref("");
 const error = ref("");
+const feedback = useAdminFeedback();
 
 function resetForm(): void {
   form.value = { name: "", extraPrice: 0, sortOrder: 0, isActive: true };
@@ -69,7 +69,6 @@ function resetForm(): void {
 
 function openCreateModal(): void {
   resetForm();
-  message.value = "";
   isModalOpen.value = true;
 }
 
@@ -81,7 +80,6 @@ function closeModal(): void {
 
 function edit(item: Flavor): void {
   form.value = { ...item };
-  message.value = "";
   formError.value = "";
   isModalOpen.value = true;
 }
@@ -101,13 +99,15 @@ async function submit(): Promise<void> {
   formError.value = "";
   const wasEditing = Boolean(form.value.id);
   try {
-    await saveFlavor(form.value);
+    const saved = await saveFlavor(form.value);
     isModalOpen.value = false;
     resetForm();
-    message.value = wasEditing ? "口味已儲存" : "口味已新增";
     await load();
+    feedback.highlight(saved.id);
+    feedback.success(wasEditing ? "口味已儲存" : "口味已新增");
   } catch {
     formError.value = "口味儲存失敗，請稍後再試。";
+    feedback.error(formError.value);
   } finally {
     saving.value = false;
   }

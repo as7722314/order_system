@@ -12,7 +12,7 @@
     </form>
     <template #footer>
       <button class="admin-modal-cancel" type="button" data-modal-initial-focus :disabled="state.busy" @click="$emit('close')">返回</button>
-      <button class="admin-modal-submit" :class="state.danger ? 'bg-red-600' : 'bg-accent'" :form="formId" type="submit" :disabled="state.busy">{{ state.busy ? "處理中…" : state.confirmLabel }}</button>
+      <button class="admin-modal-submit" :class="state.danger ? 'bg-red-600' : 'bg-accent'" :form="formId" type="submit" :disabled="state.busy" :aria-busy="state.busy">{{ state.busy ? "處理中…" : state.confirmLabel }}</button>
     </template>
   </AdminModal>
 </template>

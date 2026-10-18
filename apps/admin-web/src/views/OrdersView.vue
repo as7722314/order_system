@@ -7,7 +7,7 @@
       </div>
       <div class="flex flex-wrap gap-2">
         <button class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white" :disabled="loading" @click="openOnsiteModal">現場點餐</button>
-        <button class="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm" :disabled="loading" @click="load">重新整理</button>
+        <button class="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm" :disabled="loading" :aria-busy="loading" @click="load">重新整理</button>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="order in orders" :key="order.id" class="border-b border-stone-100">
+          <tr v-for="order in orders" :key="order.id" class="border-b border-stone-100" :class="{ 'admin-row-updated': feedback.isHighlighted(order.id) }">
             <td class="p-3 font-medium">{{ order.orderNumber }}</td>
             <td class="p-3 whitespace-nowrap text-stone-600">{{ formatDateTime(order.createdAt) }}</td>
             <td v-if="viewMode === 'deleted'" class="p-3 whitespace-nowrap text-stone-600">{{ order.deletedAt ? formatDateTime(order.deletedAt) : '-' }}</td>
@@ -64,6 +64,7 @@
                     class="rounded-md px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
                     :class="action.className"
                     :disabled="loading"
+                    :aria-busy="busyOrderId === order.id"
                     @click="changeStatus(order.id, action.status)"
                   >
                     {{ action.label }}
@@ -104,7 +105,6 @@
         </tbody>
       </table>
     </div>
-    <p v-if="message" class="mt-3 text-sm text-emerald-700">{{ message }}</p>
     <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
 
     <AdminModal :open="onsiteOpen" title="現場點餐" description="送出後會直接建立製作中訂單，後續可轉為可取餐、已完成。" :busy="savingOnsite" size="lg" @close="closeOnsiteModal">
@@ -155,7 +155,7 @@
       <template #footer>
         <p class="mr-auto text-lg font-semibold">總計 NT$ {{ onsiteTotal }}</p>
         <button class="admin-modal-cancel" type="button" :disabled="savingOnsite" @click="closeOnsiteModal">取消</button>
-        <button class="admin-modal-submit bg-accent" form="onsite-form" type="submit" :disabled="savingOnsite || activeProducts.length === 0">{{ savingOnsite ? "送出中…" : "送出現場點餐" }}</button>
+        <button class="admin-modal-submit bg-accent" form="onsite-form" type="submit" :disabled="savingOnsite || activeProducts.length === 0" :aria-busy="savingOnsite">{{ savingOnsite ? "送出中…" : "送出現場點餐" }}</button>
       </template>
     </AdminModal>
     <AdminConfirmDialog :state="confirmation" @close="closeConfirmation" @confirm="confirmAction" @update:reason="confirmation.reason = $event" />
@@ -164,6 +164,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useAdminFeedback } from "../composables/useAdminFeedback";
 import { cancelOrder, createOnsiteOrder, deleteOrder, listFlavors, listOrders, listProducts, restoreOrder, updateOrderStatus } from "../api/client";
 import AdminModal from "../components/AdminModal.vue";
 import AdminConfirmDialog from "../components/AdminConfirmDialog.vue";
@@ -185,10 +186,11 @@ const products = ref<Product[]>([]);
 const flavors = ref<Flavor[]>([]);
 const viewMode = ref<OrderViewMode>("active");
 const loading = ref(false);
+const busyOrderId = ref("");
 const savingOnsite = ref(false);
 const onsiteOpen = ref(false);
 const error = ref("");
-const message = ref("");
+const feedback = useAdminFeedback();
 const onsiteError = ref("");
 const onsiteLines = ref<OnsiteLine[]>([]);
 const { confirmation, requestConfirmation, closeConfirmation, confirmAction } = useConfirmation();
@@ -303,14 +305,21 @@ async function load(): Promise<void> {
 }
 
 async function changeStatus(id: string, status: OrderStatus): Promise<void> {
+  if (loading.value) return;
+  busyOrderId.value = id;
   loading.value = true;
   error.value = "";
   try {
     await updateOrderStatus(id, status);
     await load();
+    feedback.highlight(id);
+    feedback.success("訂單狀態已更新");
   } catch {
     error.value = "更新訂單狀態失敗";
+    feedback.error(error.value);
     loading.value = false;
+  } finally {
+    busyOrderId.value = "";
   }
 }
 
@@ -322,6 +331,8 @@ function cancel(order: Order): void {
     action: async () => {
       await cancelOrder(order.id, "管理者取消");
       await load();
+      feedback.highlight(order.id);
+      feedback.success(`訂單「${order.orderNumber}」已取消`);
     }
   });
 }
@@ -334,6 +345,7 @@ function softDelete(order: Order): void {
     action: async (reason) => {
       await deleteOrder(order.id, reason || undefined);
       await load();
+      feedback.success(`訂單「${order.orderNumber}」已移至已刪除區`);
     }
   });
 }
@@ -346,6 +358,8 @@ function restore(order: Order): void {
     action: async () => {
       await restoreOrder(order.id);
       await load();
+      feedback.highlight(order.id);
+      feedback.success(`訂單「${order.orderNumber}」已復原`);
     }
   });
 }
@@ -368,11 +382,13 @@ async function submitOnsite(): Promise<void> {
       }))
     });
     onsiteOpen.value = false;
-    message.value = `現場點餐已送出：${order.orderNumber}`;
     if (viewMode.value !== "active") viewMode.value = "active";
     await load();
+    feedback.highlight(order.id);
+    feedback.success(`現場點餐已送出：${order.orderNumber}`);
   } catch {
     onsiteError.value = "現場點餐失敗，請確認商品、口味與數量。";
+    feedback.error(onsiteError.value);
   } finally {
     savingOnsite.value = false;
   }

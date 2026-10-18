@@ -41,6 +41,7 @@
       </header>
       <RouterView />
     </div>
+    <AdminFeedback />
   </div>
 </template>
 
@@ -52,10 +53,14 @@ import AdminNotificationBell from "./components/AdminNotificationBell.vue";
 import { useAdminAuthStore } from "./stores/adminAuthStore";
 
 import AdminIcon from "./components/AdminIcon.vue";
+import AdminFeedback from "./components/AdminFeedback.vue";
+import { useAdminFeedback } from "./composables/useAdminFeedback";
 
 const auth = useAdminAuthStore();
 const router = useRouter();
 const route = useRoute();
+const feedback = useAdminFeedback();
+watch(() => auth.isLoggedIn, (loggedIn) => { if (!loggedIn) feedback.clear(); });
 const menuButton = ref<HTMLButtonElement | null>(null);
 const drawerCloseButton = ref<HTMLButtonElement | null>(null);
 const mobileMenuOpen = ref(false);
@@ -112,6 +117,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  feedback.clear();
   desktopMediaQuery?.removeEventListener("change", updateDesktopState);
   window.removeEventListener("admin-auth-expired", handleAuthExpired);
 });
