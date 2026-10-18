@@ -459,11 +459,9 @@ Request：
 總成本 = 指定日期區間內 expenses.amount 加總
 ```
 
-### 淨利
+### 報表範圍
 
-```text
-淨利 = 總營業額 - 總成本
-```
+目前僅顯示營業額、成本管理登錄金額及訂單數，不計算或顯示淨利。商品設定成本功能已停用；既有商品成本與訂單成本快照留存，不參與任何報表計算。
 
 ### 日結
 
@@ -480,8 +478,7 @@ GET /api/admin/reports/daily?date=2026-07-11
   "date": "2026-07-11",
   "orderCount": 35,
   "totalRevenue": 10000,
-  "totalExpense": 4500,
-  "netProfit": 5500
+  "totalExpense": 4500
 }
 ```
 
@@ -500,8 +497,7 @@ GET /api/admin/reports/monthly?month=2026-07
   "month": "2026-07",
   "orderCount": 850,
   "totalRevenue": 280000,
-  "totalExpense": 125000,
-  "netProfit": 155000
+  "totalExpense": 125000
 }
 ```
 
@@ -513,8 +509,7 @@ GET /api/admin/reports/monthly?month=2026-07
     {
       "date": "2026-07-01",
       "revenue": 10000,
-      "expense": 3500,
-      "netProfit": 6500
+      "expense": 3500
     }
   ]
 }
@@ -1041,7 +1036,6 @@ INTERNAL_SERVER_ERROR
 - 製作中數
 - 今日已完成營業額
 - 今日總成本
-- 今日淨利
 
 ---
 
@@ -1349,7 +1343,7 @@ Nginx 需處理：
 
 - 日結顯示當日完成訂單營業額。
 - 日結顯示當日成本。
-- 日結淨利等於營業額減成本。
+- 日結與月結僅分別統計營業額與登錄成本，不回傳淨利。
 - 月結計算指定月份。
 - CANCELLED 訂單不納入營業額。
 - 非 COMPLETED 訂單不納入營業額。

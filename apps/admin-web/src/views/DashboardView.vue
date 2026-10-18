@@ -79,7 +79,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("zh-TW", {
 const today = formatter.format(new Date());
 const todayOrders = ref<Order[]>([]);
 const pendingOrders = ref<Order[]>([]);
-const report = ref({ orderCount: 0, totalRevenue: 0, totalProductCost: 0, totalExpense: 0, netProfit: 0 });
+const report = ref({ orderCount: 0, totalRevenue: 0, totalExpense: 0 });
 const storeStatus = ref<StoreStatus | null>(null);
 const loading = ref(false);
 const savingStoreStatus = ref(false);
@@ -89,7 +89,7 @@ const cards = computed(() => [
   { label: "今日訂單數", value: String(report.value.orderCount) },
   { label: "待接單數", value: String(pendingOrders.value.length) },
   { label: "今日營收", value: money(report.value.totalRevenue) },
-  { label: "今日淨利", value: money(report.value.netProfit) }
+  { label: "今日成本", value: money(report.value.totalExpense) }
 ]);
 
 function money(amount: number): string {

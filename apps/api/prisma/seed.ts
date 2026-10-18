@@ -1,6 +1,7 @@
 import { hashPassword } from "../src/utils/password.js";
 import { UserRole } from "../src/utils/prismaEnums.js";
 import { prisma } from "../src/utils/prisma.js";
+import { pathToFileURL } from "node:url";
 
 const categories = [
   {
@@ -25,7 +26,6 @@ const products = [
     description: "一張分成兩袋一袋一個口味哦！",
     imageUrl: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d",
     price: 90,
-    cost: 0,
     sortOrder: 1,
     isActive: true
   },
@@ -36,7 +36,6 @@ const products = [
     description: "選兩個口味是混在同一包哦！",
     imageUrl: null,
     price: 45,
-    cost: 0,
     sortOrder: 2,
     isActive: true
   }
@@ -91,17 +90,14 @@ const productFlavors = products.flatMap((product) =>
   flavors.map((flavor) => ({ productId: product.id, flavorId: flavor.id }))
 );
 
-async function seedAdmin(): Promise<void> {
+export async function seedAdmin(): Promise<void> {
   const account = process.env.ADMIN_ACCOUNT ?? "admin";
   const password = process.env.ADMIN_INITIAL_PASSWORD ?? "change_me";
   const passwordHash = await hashPassword(password);
 
   const admin = await prisma.user.upsert({
     where: { lineUserId: "admin-seed" },
-    update: {
-      displayName: account,
-      passwordHash
-    },
+    update: {},
     create: {
       lineUserId: "admin-seed",
       displayName: account,
@@ -113,7 +109,11 @@ async function seedAdmin(): Promise<void> {
   console.log(`Seed admin complete. Admin id: ${admin.id}`);
 }
 
-async function seedCatalog(): Promise<void> {
+export async function seedCatalog(): Promise<void> {
+  if (await prisma.product.count() > 0) {
+    console.log("Catalog already exists; preserving the current menu and flavors.");
+    return;
+  }
   for (const category of categories) {
     await prisma.productCategory.upsert({
       where: { id: category.id },
@@ -174,7 +174,9 @@ async function main(): Promise<void> {
   await seedCatalog();
 }
 
-main()
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

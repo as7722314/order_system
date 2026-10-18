@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
 import { prisma } from "../utils/prisma.js";
+import { withoutProductCost } from "../utils/productResponse.js";
 
 const defaultCategoryName = "預設商品";
 
@@ -13,7 +14,6 @@ type ProductBody = {
   description?: string;
   imageUrl?: string;
   price: number;
-  cost: number;
   sortOrder: number;
   isActive: boolean;
   flavorIds?: string[];
@@ -34,7 +34,6 @@ function cleanProductBody(body: ProductBody) {
     description: body.description,
     imageUrl: body.imageUrl || undefined,
     price: body.price,
-    cost: body.cost,
     sortOrder: body.sortOrder,
     isActive: body.isActive
   };
@@ -71,10 +70,11 @@ export async function updateCategoryStatus(req: Request, res: Response): Promise
 }
 
 export async function listProducts(_req: Request, res: Response): Promise<Response> {
-  return ok(res, await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     include: productInclude,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }]
-  }));
+  });
+  return ok(res, products.map(withoutProductCost));
 }
 
 export async function createProduct(req: Request, res: Response): Promise<Response> {
@@ -92,7 +92,7 @@ export async function createProduct(req: Request, res: Response): Promise<Respon
     }
     return tx.product.findUniqueOrThrow({ where: { id: created.id }, include: productInclude });
   });
-  return ok(res, product, 201);
+  return ok(res, withoutProductCost(product), 201);
 }
 
 export async function updateProduct(req: Request, res: Response): Promise<Response> {
@@ -114,7 +114,7 @@ export async function updateProduct(req: Request, res: Response): Promise<Respon
     }
     return tx.product.findUniqueOrThrow({ where: { id: req.params.id }, include: productInclude });
   });
-  return ok(res, product);
+  return ok(res, withoutProductCost(product));
 }
 
 export async function deleteProduct(req: Request, res: Response): Promise<Response> {
@@ -126,7 +126,8 @@ export async function deleteProduct(req: Request, res: Response): Promise<Respon
 
 export async function updateProductStatus(req: Request, res: Response): Promise<Response> {
   const { isActive } = req.body as { isActive: boolean };
-  return ok(res, await prisma.product.update({ where: { id: req.params.id }, data: { isActive } }));
+  const product = await prisma.product.update({ where: { id: req.params.id }, data: { isActive } });
+  return ok(res, withoutProductCost(product));
 }
 
 export async function listFlavors(_req: Request, res: Response): Promise<Response> {

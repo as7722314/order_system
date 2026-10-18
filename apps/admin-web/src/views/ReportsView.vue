@@ -1,6 +1,7 @@
 <template>
   <main class="p-6">
     <h1 class="text-2xl font-semibold">報表</h1>
+    <p class="mt-2 text-sm text-stone-500">營業額依已完成訂單統計；成本為成本管理中登錄的金額合計。</p>
     <section class="mt-5 grid gap-4 md:grid-cols-2">
       <div class="rounded-lg border border-stone-200 bg-white p-5">
         <div class="flex gap-2">
@@ -12,9 +13,7 @@
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">日期</th><td class="p-3">{{ daily.date }}</td></tr>
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">完成訂單數</th><td class="p-3">{{ daily.orderCount }}</td></tr>
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">營業額</th><td class="p-3">NT$ {{ daily.totalRevenue }}</td></tr>
-            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">商品成本</th><td class="p-3">NT$ {{ daily.totalProductCost }}</td></tr>
-            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">其他支出</th><td class="p-3">NT$ {{ daily.totalExpense }}</td></tr>
-            <tr><th class="p-3 text-stone-500">淨利</th><td class="p-3 font-semibold">NT$ {{ daily.netProfit }}</td></tr>
+            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">成本</th><td class="p-3">NT$ {{ daily.totalExpense }}</td></tr>
           </tbody>
         </table>
       </div>
@@ -28,9 +27,7 @@
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">月份</th><td class="p-3">{{ monthly.month }}</td></tr>
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">完成訂單數</th><td class="p-3">{{ monthly.orderCount }}</td></tr>
             <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">營業額</th><td class="p-3">NT$ {{ monthly.totalRevenue }}</td></tr>
-            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">商品成本</th><td class="p-3">NT$ {{ monthly.totalProductCost }}</td></tr>
-            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">其他支出</th><td class="p-3">NT$ {{ monthly.totalExpense }}</td></tr>
-            <tr><th class="p-3 text-stone-500">淨利</th><td class="p-3 font-semibold">NT$ {{ monthly.netProfit }}</td></tr>
+            <tr class="border-b border-stone-100"><th class="p-3 text-stone-500">成本</th><td class="p-3">NT$ {{ monthly.totalExpense }}</td></tr>
           </tbody>
         </table>
       </div>
@@ -43,18 +40,14 @@
           <tr>
             <th class="p-3">日期</th>
             <th class="p-3">營業額</th>
-            <th class="p-3">商品成本</th>
-            <th class="p-3">其他支出</th>
-            <th class="p-3">淨利</th>
+            <th class="p-3">成本</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in monthly.daily" :key="row.date" class="border-b border-stone-100">
             <td class="p-3">{{ row.date }}</td>
             <td class="p-3">NT$ {{ row.revenue }}</td>
-            <td class="p-3">NT$ {{ row.productCost }}</td>
             <td class="p-3">NT$ {{ row.expense }}</td>
-            <td class="p-3">NT$ {{ row.netProfit }}</td>
           </tr>
         </tbody>
       </table>
@@ -68,7 +61,7 @@ import { dailyReport, monthlyReport } from "../api/client";
 import type { Report } from "../types/admin";
 
 type DailyReport = Report & { date: string };
-type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; productCost: number; expense: number; netProfit: number }[] };
+type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; expense: number }[] };
 
 const date = ref(new Date().toISOString().slice(0, 10));
 const month = ref(new Date().toISOString().slice(0, 7));

@@ -76,7 +76,15 @@ docker compose exec api npm run prisma:seed
 - 顧客端商品、口味、購物車、下單、查詢頁
 - 管理後台登入、CRUD、訂單、成本、報表頁
 
-## 測試
+## 營業額與成本報表
+
+目前日結、月結與儀表板只顯示已完成訂單營業額及成本管理中登錄的成本合計，不計算或回傳淨利。商品新增、編輯及列表已移除商品成本，新增訂單也不再擷取商品成本快照。
+
+既有資料庫的 `products.cost`、`order_items.unit_cost_snapshot` 保留作歷史資料，不再供設定與報表使用；這次調整不需新增 migration，也不會清除既有成本紀錄。商品 API 省略 `cost` 欄位；舊版客戶端傳入的 `cost` 會被忽略。報表 API 移除 `netProfit`、`totalProductCost` 及每日明細的 `netProfit`、`productCost`，更新 API 時需同步更新管理網頁與平板 App。
+
+## 測試指令
+
+部署時的 seed 會保留既有管理員密碼及顯示名稱；已有商品時不再重寫預設菜單、售價與口味關聯。
 
 ```bash
 npm run test --workspace @line-order/api

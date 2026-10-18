@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
 import { prisma } from "../utils/prisma.js";
+import { withoutProductCost } from "../utils/productResponse.js";
 
 async function withDefaultFlavorsForUnconfiguredProducts<T extends { productFlavors: unknown[] }>(products: T[]): Promise<T[]> {
   if (products.every((product) => product.productFlavors.length > 0)) return products;
@@ -13,11 +14,6 @@ async function withDefaultFlavorsForUnconfiguredProducts<T extends { productFlav
       productFlavors: activeFlavors.map((flavor) => ({ flavorId: flavor.id, flavor, productId: "" }))
     };
   }) as T[];
-}
-
-function withoutProductCost<T extends { cost: number }>(product: T): Omit<T, "cost"> {
-  const { cost: _cost, ...publicProduct } = product;
-  return publicProduct;
 }
 
 export async function listPublicCategories(_req: Request, res: Response): Promise<Response> {
