@@ -1,60 +1,34 @@
 <template>
   <main class="p-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-semibold">儀表板</h1>
-        <p class="mt-1 text-sm text-stone-500">{{ today }} 營運狀態</p>
-      </div>
-      <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" @click="load">
-        {{ loading ? "讀取中" : "重新整理" }}
-      </button>
+      <div><p class="admin-eyebrow">門市日常</p><h1 class="text-2xl font-semibold">今日營運概況</h1><p class="mt-2 text-sm text-stone-500">掌握接單進度、營業額與成本紀錄。</p></div>
+      <button class="flex items-center gap-2 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" :disabled="loading" @click="load"><AdminIcon name="refresh" class="h-4 w-4" />{{ loading ? "讀取中" : "重新整理" }}</button>
     </div>
 
-    <section class="mt-5 rounded-lg border bg-white p-5" :class="storeStatus?.isOpen ? 'border-emerald-200' : 'border-red-200'">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-stone-500">線上點餐狀態</p>
-          <h2 class="mt-1 text-2xl font-semibold" :class="storeStatus?.isOpen ? 'text-emerald-700' : 'text-red-700'">
-            {{ storeStatus?.isOpen ? "營業中" : "暫停點餐" }}
-          </h2>
-          <p v-if="storeStatus" class="mt-1 text-sm text-stone-500">最後更新：{{ formatDateTime(storeStatus.updatedAt) }}</p>
+    <section class="admin-store-banner" :class="{ 'is-closed': !storeStatus?.isOpen }">
+      <div class="flex flex-wrap items-center justify-between gap-5">
+        <div class="admin-store-copy">
+          <div class="admin-store-symbol"><AdminIcon name="store" /></div>
+          <div><p class="text-xs text-stone-600">線上點餐狀態</p><h2 class="admin-store-title"><i class="admin-status-dot" aria-hidden="true"></i>{{ storeStatus?.isOpen ? "營業中" : "暫停點餐" }}</h2><p v-if="storeStatus" class="text-xs text-stone-500">最後更新 {{ formatDateTime(storeStatus.updatedAt) }}</p></div>
         </div>
-        <button class="rounded-md px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :class="storeStatus?.isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'" :disabled="loading || savingStoreStatus || !storeStatus" type="button" @click="toggleStoreStatus">
-          {{ savingStoreStatus ? "更新中" : storeStatus?.isOpen ? "暫停點餐" : "開始營業" }}
-        </button>
+        <button class="rounded-md px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :class="storeStatus?.isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'" :disabled="loading || savingStoreStatus || !storeStatus" type="button" @click="toggleStoreStatus">{{ savingStoreStatus ? "更新中" : storeStatus?.isOpen ? "暫停點餐" : "開始營業" }}</button>
       </div>
     </section>
 
-    <div class="mt-5 grid gap-4 md:grid-cols-4">
-      <section v-for="card in cards" :key="card.label" class="rounded-lg border border-stone-200 bg-white p-5">
-        <p class="text-sm text-stone-500">{{ card.label }}</p>
-        <p class="mt-2 text-2xl font-semibold">{{ card.value }}</p>
-      </section>
+    <div class="admin-metrics">
+      <section v-for="card in cards" :key="card.label" class="admin-metric"><div class="admin-metric-heading"><span>{{ card.label }}</span><span class="admin-metric-icon"><AdminIcon :name="card.icon" /></span></div><p class="admin-metric-value">{{ card.value }}</p><p class="admin-metric-caption">{{ card.caption }}</p></section>
     </div>
+    <p v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ error }}</p>
 
-    <p v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
-
-    <section class="mt-6">
-      <div class="mb-3 flex items-center justify-between gap-4">
-        <h2 class="text-lg font-semibold">待接單明細</h2>
-        <span class="text-sm text-stone-500">{{ pendingOrders.length }} 筆</span>
-      </div>
-      <OrderDetailList interactive :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" />
-    </section>
-
-    <section class="mt-8">
-      <div class="mb-3 flex items-center justify-between gap-4">
-        <h2 class="text-lg font-semibold">今日訂單明細</h2>
-        <span class="text-sm text-stone-500">{{ todayOrders.length }} 筆</span>
-      </div>
-      <OrderDetailList :orders="todayOrders" empty-text="今天尚無訂單" />
-    </section>
+    <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="clock" />待接單明細</h2><span class="admin-count-badge">{{ pendingOrders.length }} 筆</span></div><OrderDetailList interactive :disabled="loading" :orders="pendingOrders" empty-text="目前沒有待接單訂單" @cancel="cancel" @change-status="changeStatus" /></section>
+    <section class="mt-8"><div class="admin-section-heading"><h2><AdminIcon name="orders" />今日訂單明細</h2><span class="admin-count-badge">{{ todayOrders.length }} 筆</span></div><OrderDetailList :orders="todayOrders" empty-text="今天尚無訂單" /></section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, ref } from "vue";
 import { cancelOrder, dailyReport, getStoreStatus, listOrders, updateOrderStatus, updateStoreStatus } from "../api/client";
+import AdminIcon from "../components/AdminIcon.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 import type { Order, OrderItem, OrderStatus, StoreStatus } from "../types/admin";
 import { canCancel, normalizeStatus, statusActions } from "../utils/orderStatusActions";
@@ -86,10 +60,10 @@ const savingStoreStatus = ref(false);
 const error = ref("");
 
 const cards = computed(() => [
-  { label: "今日訂單數", value: String(report.value.orderCount) },
-  { label: "待接單數", value: String(pendingOrders.value.length) },
-  { label: "今日營收", value: money(report.value.totalRevenue) },
-  { label: "今日成本", value: money(report.value.totalExpense) }
+  { label: "今日完成訂單", value: String(report.value.orderCount), icon: "orders", caption: "依完成時間統計" },
+  { label: "待接單數", value: String(pendingOrders.value.length), icon: "clock", caption: "等待確認的訂單" },
+  { label: "今日營業額", value: money(report.value.totalRevenue), icon: "revenue", caption: "已完成訂單合計" },
+  { label: "今日成本", value: money(report.value.totalExpense), icon: "expenses", caption: "已登錄成本合計" }
 ]);
 
 function money(amount: number): string {
@@ -180,7 +154,7 @@ const OrderDetailList = defineComponent({
   setup(props, { emit }) {
     return () => {
       if (props.orders.length === 0) {
-        return h("div", { class: "rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500" }, props.emptyText);
+        return h("div", { class: "admin-empty" }, props.emptyText);
       }
 
       return h("div", { class: "grid gap-3" }, props.orders.map((order) => {

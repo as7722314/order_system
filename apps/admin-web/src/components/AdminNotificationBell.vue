@@ -16,7 +16,7 @@
       <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white" :class="connected ? 'bg-emerald-500' : 'bg-stone-400'"></span>
     </button>
 
-    <div v-if="open" class="fixed right-3 top-16 z-50 w-[calc(100vw-1.5rem)] max-w-[20rem] rounded-lg border border-stone-200 bg-white shadow-lg md:absolute md:left-full md:right-auto md:top-0 md:z-20 md:ml-2 md:w-80">
+    <div v-if="open" class="fixed right-3 top-[4.75rem] z-50 w-[calc(100vw-1.5rem)] max-w-[20rem] rounded-lg border border-stone-200 bg-white shadow-lg md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-80">
       <div class="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <div>
           <p class="font-semibold text-stone-900">新訂單通知</p>

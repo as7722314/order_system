@@ -30,7 +30,7 @@
       </button>
     </div>
 
-    <div class="mt-5 overflow-x-auto rounded-lg bg-white">
+    <div class="admin-table-wrap mt-5">
       <table class="w-full text-left text-sm">
         <thead class="bg-stone-100 text-stone-600">
           <tr>

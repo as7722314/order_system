@@ -1,75 +1,91 @@
 <template>
-  <div class="min-h-screen">
-    <header v-if="auth.isLoggedIn && !isDesktop" class="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-stone-200 bg-white px-4 md:hidden">
-      <button class="rounded-md border border-stone-300 p-2 text-stone-700" title="開啟選單" type="button" @click="mobileMenuOpen = true">
-        <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M4 6h16" />
-          <path d="M4 12h16" />
-          <path d="M4 18h16" />
-        </svg>
-      </button>
-      <h1 class="text-base font-semibold text-accent">管理後台</h1>
+  <div class="admin-app">
+    <header v-if="auth.isLoggedIn && !isDesktop" class="admin-mobile-header">
+      <button ref="menuButton" class="admin-icon-button" aria-label="開啟選單" aria-controls="admin-mobile-navigation" :aria-expanded="mobileMenuOpen" type="button" @click="mobileMenuOpen = true"><AdminIcon name="menu" /></button>
+      <RouterLink to="/" class="admin-brand"><span class="admin-brand-mark">何</span><span><strong>何佳佳蔥油餅</strong><small>門市管理後台</small></span></RouterLink>
       <AdminNotificationBell />
     </header>
 
-    <aside v-if="auth.isLoggedIn" class="fixed inset-y-0 left-0 hidden w-60 border-r border-stone-200 bg-white p-4 md:block">
-      <div class="mb-6 flex items-center justify-between gap-3">
-        <h1 class="text-lg font-semibold text-accent">管理後台</h1>
-        <AdminNotificationBell v-if="isDesktop" />
-      </div>
-      <nav class="space-y-1 text-sm">
-        <RouterLink v-for="link in links" :key="link.to" class="block rounded-md px-3 py-2 hover:bg-stone-100" :to="link.to">{{ link.label }}</RouterLink>
+    <aside v-if="auth.isLoggedIn" class="admin-sidebar" aria-label="管理後台導覽">
+      <RouterLink to="/" class="admin-brand"><span class="admin-brand-mark">何</span><span><strong>何佳佳蔥油餅</strong><small>門市管理後台</small></span></RouterLink>
+      <p class="admin-nav-caption">日常營運</p>
+      <nav class="admin-nav" aria-label="主要功能">
+        <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="admin-nav-link"><AdminIcon :name="link.icon" /><span>{{ link.label }}</span><i class="nav-indicator" aria-hidden="true"></i></RouterLink>
       </nav>
-      <AdminInstallButton />
-      <button class="mt-4 w-full rounded-md border border-stone-300 py-2" @click="logout">登出</button>
+      <div class="admin-sidebar-bottom">
+        <div class="admin-sidebar-note"><AdminIcon name="store" /><span>每一份好滋味<br />從用心經營開始</span></div>
+        <AdminInstallButton />
+        <button class="admin-logout" type="button" @click="logout"><AdminIcon name="logout" />登出帳號</button>
+      </div>
     </aside>
 
-    <div v-if="auth.isLoggedIn && mobileMenuOpen" class="fixed inset-0 z-50 md:hidden">
-      <button class="absolute inset-0 bg-black/40" title="關閉選單" type="button" @click="mobileMenuOpen = false"></button>
-      <aside class="relative z-10 h-full w-72 max-w-[85vw] border-r border-stone-200 bg-white p-4 shadow-xl">
-        <div class="mb-6 flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-accent">管理後台</h2>
-          <button class="rounded-full p-2 text-stone-500 hover:bg-stone-100" title="關閉選單" type="button" @click="mobileMenuOpen = false">
-            <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
+    <div v-if="auth.isLoggedIn && mobileMenuOpen" class="admin-drawer-backdrop">
+      <button class="absolute inset-0" aria-label="關閉選單背景" type="button" @click="mobileMenuOpen = false"></button>
+      <aside id="admin-mobile-navigation" class="admin-drawer relative" role="dialog" aria-modal="true" aria-label="功能選單" @keydown.esc.stop="mobileMenuOpen = false" @keydown.tab="trapDrawerFocus">
+        <div class="admin-drawer-heading">
+          <div class="admin-brand"><span class="admin-brand-mark">何</span><span><strong>何佳佳蔥油餅</strong><small>門市管理後台</small></span></div>
+          <button ref="drawerCloseButton" class="admin-icon-button" aria-label="關閉選單" type="button" @click="mobileMenuOpen = false"><AdminIcon name="close" /></button>
         </div>
-        <nav class="space-y-1 text-base">
-          <RouterLink v-for="link in links" :key="link.to" class="block rounded-md px-3 py-3 hover:bg-stone-100" :to="link.to" @click="mobileMenuOpen = false">{{ link.label }}</RouterLink>
+        <p class="admin-nav-caption">日常營運</p>
+        <nav class="admin-nav" aria-label="手機主要功能">
+          <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="admin-nav-link" @click="mobileMenuOpen = false"><AdminIcon :name="link.icon" /><span>{{ link.label }}</span><i class="nav-indicator" aria-hidden="true"></i></RouterLink>
         </nav>
-        <AdminInstallButton />
-        <button class="mt-4 w-full rounded-md border border-stone-300 py-3" @click="logout">登出</button>
+        <div class="admin-sidebar-bottom"><AdminInstallButton /><button class="admin-logout" type="button" @click="logout"><AdminIcon name="logout" />登出帳號</button></div>
       </aside>
     </div>
 
-    <div :class="auth.isLoggedIn ? 'pt-14 md:pl-60 md:pt-0' : ''">
+    <div class="admin-content" :class="{ 'is-authenticated': auth.isLoggedIn }">
+      <header v-if="auth.isLoggedIn && isDesktop" class="admin-topbar">
+        <div class="admin-breadcrumb"><span>門市工作台</span><AdminIcon name="chevron" /><strong>{{ activePage }}</strong></div>
+        <div class="admin-topbar-right"><span class="admin-date">{{ dateLabel }}</span><AdminNotificationBell /></div>
+      </header>
       <RouterView />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import AdminInstallButton from "./components/AdminInstallButton.vue";
 import AdminNotificationBell from "./components/AdminNotificationBell.vue";
 import { useAdminAuthStore } from "./stores/adminAuthStore";
 
+import AdminIcon from "./components/AdminIcon.vue";
+
 const auth = useAdminAuthStore();
 const router = useRouter();
+const route = useRoute();
+const menuButton = ref<HTMLButtonElement | null>(null);
+const drawerCloseButton = ref<HTMLButtonElement | null>(null);
 const mobileMenuOpen = ref(false);
 const isDesktop = ref(window.matchMedia("(min-width: 768px)").matches);
 let desktopMediaQuery: MediaQueryList | null = null;
 const links = [
-  { to: "/", label: "儀表板" },
-  { to: "/products", label: "商品" },
-  { to: "/flavors", label: "口味" },
-  { to: "/orders", label: "訂單" },
-  { to: "/expenses", label: "成本" },
-  { to: "/reports", label: "報表" }
+  { to: "/", label: "儀表板", icon: "dashboard" },
+  { to: "/products", label: "商品", icon: "products" },
+  { to: "/flavors", label: "口味", icon: "flavors" },
+  { to: "/orders", label: "訂單", icon: "orders" },
+  { to: "/expenses", label: "成本", icon: "expenses" },
+  { to: "/reports", label: "報表", icon: "reports" }
 ];
+
+const activePage = computed(() => links.find((link) => link.to === route.path)?.label ?? "門市工作台");
+const dateLabel = new Intl.DateTimeFormat("zh-TW", { timeZone: "Asia/Taipei", month: "long", day: "numeric", weekday: "long" }).format(new Date());
+watch(mobileMenuOpen, async (opened) => {
+  await nextTick();
+  if (opened) drawerCloseButton.value?.focus();
+  else menuButton.value?.focus();
+});
+
+function trapDrawerFocus(event: KeyboardEvent): void {
+  const drawer = event.currentTarget as HTMLElement;
+  const controls = [...drawer.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+  const first = controls[0];
+  const last = controls.at(-1);
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+}
 
 function updateDesktopState(event?: MediaQueryListEvent): void {
   isDesktop.value = event?.matches ?? desktopMediaQuery?.matches ?? false;

@@ -40,7 +40,7 @@
 
     <p v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
 
-    <div class="mt-5 overflow-x-auto rounded-lg bg-white">
+    <div class="admin-table-wrap mt-5">
       <table class="w-full text-left text-sm">
         <thead class="bg-stone-100 text-stone-600">
           <tr>
@@ -72,7 +72,7 @@
     </div>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <form class="w-full max-w-2xl rounded-lg bg-white p-5 shadow-xl" @submit.prevent="submit">
+      <form class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-5 shadow-xl" @submit.prevent="submit">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-xl font-semibold text-stone-900">{{ form.id ? "編輯成本" : "新增成本" }}</h2>

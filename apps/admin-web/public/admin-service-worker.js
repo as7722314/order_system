@@ -1,4 +1,4 @@
-const CACHE_NAME = "line-order-admin-shell-v1";
+const CACHE_NAME = "line-order-admin-shell-v2";
 const APP_SHELL = ["./", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

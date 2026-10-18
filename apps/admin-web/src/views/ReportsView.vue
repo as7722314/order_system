@@ -1,11 +1,11 @@
 <template>
   <main class="p-6">
-    <h1 class="text-2xl font-semibold">報表</h1>
+    <p class="admin-eyebrow">營業紀錄</p><h1 class="text-2xl font-semibold">報表</h1>
     <p class="mt-2 text-sm text-stone-500">營業額依已完成訂單統計；成本為成本管理中登錄的金額合計。</p>
     <section class="mt-5 grid gap-4 md:grid-cols-2">
       <div class="rounded-lg border border-stone-200 bg-white p-5">
         <div class="flex gap-2">
-          <input v-model="date" class="rounded-md border border-stone-300 p-3" type="date" />
+          <input v-model="date" aria-label="日結日期" class="rounded-md border border-stone-300 p-3" type="date" />
           <button class="rounded-md bg-accent px-4 py-3 text-white" @click="loadDaily">日結</button>
         </div>
         <table v-if="daily" class="mt-4 w-full text-left text-sm">
@@ -19,7 +19,7 @@
       </div>
       <div class="rounded-lg border border-stone-200 bg-white p-5">
         <div class="flex gap-2">
-          <input v-model="month" class="rounded-md border border-stone-300 p-3" type="month" />
+          <input v-model="month" aria-label="月結月份" class="rounded-md border border-stone-300 p-3" type="month" />
           <button class="rounded-md bg-accent px-4 py-3 text-white" @click="loadMonthly">月結</button>
         </div>
         <table v-if="monthly" class="mt-4 w-full text-left text-sm">
@@ -35,7 +35,7 @@
 
     <section v-if="monthly?.daily.length" class="mt-5 rounded-lg border border-stone-200 bg-white p-5">
       <h2 class="text-lg font-semibold">月結每日明細</h2>
-      <table class="mt-4 w-full text-left text-sm">
+      <div class="admin-table-wrap mt-4"><table class="w-full text-left text-sm">
         <thead class="bg-stone-100 text-stone-600">
           <tr>
             <th class="p-3">日期</th>
@@ -50,7 +50,7 @@
             <td class="p-3">NT$ {{ row.expense }}</td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </section>
   </main>
 </template>

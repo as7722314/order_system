@@ -1,16 +1,16 @@
 <template>
   <main class="p-6">
     <div class="flex items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold">商品</h1>
+      <div><p class="admin-eyebrow">餐點設定</p><h1 class="text-2xl font-semibold">商品</h1><p class="mt-2 text-sm text-stone-500">維護餐點內容、售價與可選口味。</p></div>
       <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium" @click="resetForm">新增商品</button>
     </div>
 
     <form class="mt-5 grid gap-3 rounded-lg border border-stone-200 bg-white p-4 md:grid-cols-4" @submit.prevent="submit">
-      <input v-model="form.name" class="rounded-md border border-stone-300 p-3 md:col-span-2" placeholder="商品名稱" />
-      <input v-model.number="form.price" class="rounded-md border border-stone-300 p-3" placeholder="售價" type="number" />
-      <input v-model.number="form.sortOrder" class="rounded-md border border-stone-300 p-3" placeholder="排序" type="number" />
+      <label class="grid gap-2 text-sm font-medium text-stone-700 md:col-span-2">商品名稱<input v-model="form.name" class="w-full rounded-md border border-stone-300 p-3 font-normal" placeholder="商品名稱" /></label>
+      <label class="grid gap-2 text-sm font-medium text-stone-700">售價<input v-model.number="form.price" class="w-full rounded-md border border-stone-300 p-3 font-normal" placeholder="售價" type="number" /></label>
+      <label class="grid gap-2 text-sm font-medium text-stone-700">排序<input v-model.number="form.sortOrder" class="w-full rounded-md border border-stone-300 p-3 font-normal" placeholder="排序" type="number" /></label>
       <label class="flex items-center gap-2"><input v-model="form.isActive" type="checkbox" /> 啟用</label>
-      <textarea v-model="form.description" class="rounded-md border border-stone-300 p-3 md:col-span-3" placeholder="商品說明"></textarea>
+      <label class="grid gap-2 text-sm font-medium text-stone-700 md:col-span-3">商品說明<textarea v-model="form.description" class="w-full rounded-md border border-stone-300 p-3 font-normal" placeholder="商品說明"></textarea></label>
       <fieldset class="md:col-span-4">
         <legend class="mb-2 text-sm font-medium text-stone-700">可選口味</legend>
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -29,7 +29,7 @@
       <p v-if="error" class="text-sm text-red-600 md:col-span-4">{{ error }}</p>
     </form>
 
-    <table class="mt-5 w-full overflow-hidden rounded-lg bg-white text-left text-sm">
+    <div class="admin-table-wrap mt-5"><table class="w-full overflow-hidden rounded-lg bg-white text-left text-sm">
       <thead class="bg-stone-100 text-stone-600">
         <tr>
           <th class="p-3">名稱</th>
@@ -56,7 +56,7 @@
           </td>
         </tr>
       </tbody>
-    </table>
+    </table></div>
   </main>
 </template>
 
