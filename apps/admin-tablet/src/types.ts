@@ -45,5 +45,6 @@ export type OnsiteOrderPayload = { items: { productId: string; quantity: number;
 export type Expense = { id: string; expenseDate: string; category: string; name: string; amount: number; note?: string | null };
 export type Report = { orderCount: number; totalRevenue: number; totalExpense: number };
 export type DailyReport = Report & { date: string };
-export type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; expense: number }[] };
+export type MonthlyReport = Report & { month: string; daily: { date: string; revenue: number; expense: number }[]; expenseCategories?: { category: string; amount: number; count: number }[] };
+export type DashboardCharts = { date: string; daily: { date: string; revenue: number }[]; orderStatuses: { status: OrderStatus; count: number }[] };
 export type StoreStatus = { isOpen: boolean; updatedAt: string };

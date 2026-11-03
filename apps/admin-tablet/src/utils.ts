@@ -10,6 +10,13 @@ export function taipeiMonth(date = new Date()): string {
   return taipeiDate(date).slice(0, 7);
 }
 
+export function shiftMonth(month: string, offset: number): string | null {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || Number(month.slice(0, 4)) < 1900) return null;
+  const [year, value] = month.split("-").map(Number);
+  const next = new Date(Date.UTC(year, value - 1 + offset, 1));
+  return next.getUTCFullYear() >= 1900 && next.getUTCFullYear() <= 9999 ? next.toISOString().slice(0, 7) : null;
+}
+
 export function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,

@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import type { ApiResponse, Category, DailyReport, Expense, Flavor, MonthlyReport, OnsiteOrderPayload, Order, OrderStatus, Product, StoreStatus } from "./types";
+import type { ApiResponse, Category, DashboardCharts, DailyReport, Expense, Flavor, MonthlyReport, OnsiteOrderPayload, Order, OrderStatus, Product, StoreStatus } from "./types";
 
 type AppEnvironment = "local" | "production";
 type AppExtra = { appEnvironment?: AppEnvironment; apiBaseUrl?: string };
@@ -51,13 +51,13 @@ export const adminApi = {
   registerPushToken: (token: string, platform: string) => request<void>("/admin/push-tokens", { method: "POST", body: json({ token, platform }) }),
   unregisterPushToken: (token: string, platform: string) => request<void>("/admin/push-tokens", { method: "DELETE", body: json({ token, platform }) }),
   listCategories: () => request<Category[]>("/admin/categories"),
-  saveCategory: (value: Partial<Category>) => request<void>(value.id ? `/admin/categories/${value.id}` : "/admin/categories", { method: value.id ? "PUT" : "POST", body: json(value) }),
+  saveCategory: (value: Partial<Category>) => request<Category>(value.id ? `/admin/categories/${value.id}` : "/admin/categories", { method: value.id ? "PUT" : "POST", body: json(value) }),
   listFlavors: () => request<Flavor[]>("/admin/flavors"),
-  saveFlavor: (value: Partial<Flavor>) => request<void>(value.id ? `/admin/flavors/${value.id}` : "/admin/flavors", { method: value.id ? "PUT" : "POST", body: json(value) }),
+  saveFlavor: (value: Partial<Flavor>) => request<Flavor>(value.id ? `/admin/flavors/${value.id}` : "/admin/flavors", { method: value.id ? "PUT" : "POST", body: json(value) }),
   listProducts: () => request<Product[]>("/admin/products"),
   saveProduct: (value: Partial<Product> & { flavorIds: string[] }) => {
     const body = { name: value.name || "", description: value.description || "", price: Number(value.price || 0), sortOrder: Number(value.sortOrder || 0), isActive: value.isActive ?? true, flavorIds: value.flavorIds };
-    return request<void>(value.id ? `/admin/products/${value.id}` : "/admin/products", { method: value.id ? "PUT" : "POST", body: json(body) });
+    return request<Product>(value.id ? `/admin/products/${value.id}` : "/admin/products", { method: value.id ? "PUT" : "POST", body: json(body) });
   },
   deleteProduct: (id: string) => request<void>(`/admin/products/${id}`, { method: "DELETE" }),
   listOrders: (params: { status?: OrderStatus; date?: string; keyword?: string; deleted?: "active" | "deleted" | "all"; pageSize?: number } = {}) => request<{ items: Order[] }>(`/admin/orders${query(params)}`).then((data) => data.items),
@@ -69,9 +69,10 @@ export const adminApi = {
   listExpenses: (params: { startDate?: string; endDate?: string; category?: string; pageSize?: number } = {}) => request<{ items: Expense[] }>(`/admin/expenses${query(params)}`).then((data) => data.items),
   saveExpense: (value: Partial<Expense>) => {
     const body = { expenseDate: value.expenseDate, category: value.category || "日常消耗", name: value.name || "", amount: Number(value.amount || 0), note: value.note || "" };
-    return request<void>(value.id ? `/admin/expenses/${value.id}` : "/admin/expenses", { method: value.id ? "PUT" : "POST", body: json(body) });
+    return request<Expense>(value.id ? `/admin/expenses/${value.id}` : "/admin/expenses", { method: value.id ? "PUT" : "POST", body: json(body) });
   },
   deleteExpense: (id: string) => request<void>(`/admin/expenses/${id}`, { method: "DELETE" }),
+  dashboardCharts: (date: string) => request<DashboardCharts>(`/admin/reports/dashboard${query({ date })}`),
   dailyReport: (date: string) => request<DailyReport>(`/admin/reports/daily${query({ date })}`),
   monthlyReport: (month: string) => request<MonthlyReport>(`/admin/reports/monthly${query({ month })}`),
 };

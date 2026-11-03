@@ -25,7 +25,7 @@ npm run build:android:local
 npm run build:android:production
 ```
 
-兩個指令會分別輸出到 `dist/order-system-admin-tablet-local-v1.0.0.apk` 與 `dist/order-system-admin-tablet-production-v1.0.0.apk`，並檢查 APK 內嵌環境與 API 網址完全一致。正式版只有在 `APP_ENV=production` 時才能連線正式 API。
+兩個指令會分別輸出到 `dist/order-system-admin-tablet-local-v1.1.1.apk` 與 `dist/order-system-admin-tablet-production-v1.1.1.apk`，並檢查 APK 內嵌環境與 API 網址完全一致。正式版只有在 `APP_ENV=production` 時才能連線正式 API。
 
 ## 關閉 App 後的新訂單推播
 
@@ -65,3 +65,17 @@ npx expo export --platform android
 登入呼叫 `POST /api/admin/auth/login`，取得的 JWT 會透過 `expo-secure-store` 存入 iOS Keychain 或 Android Keystore。其餘管理 API 會自動加入 `Authorization: Bearer <token>`；遇到 401 時自動登出。
 
 App 在前景執行時每 20 秒檢查待接訂單；發現新訂單會顯示原生提示與訂單未讀徽章。儀表板本身每 30 秒更新一次。
+
+## 1.1.0 儀表板與操作回饋
+
+- 近 7／30 天營業額趨勢、今日訂單狀態、每月營業額與成本比較、成本分類。
+- 點選圖表查看數值；月份按鈕可切換歷史月份，長圖可左右滑動。
+- 新增與編輯使用彈出表單，儲存時鎖定操作並顯示處理中狀態。
+- 完成後顯示提示並將更新項目反白；失敗保留表單內容與錯誤訊息。
+- 僅呈現營業額與登錄成本，不計算淨利或商品成本。
+
+## 1.1.1 選單排版修正
+
+- 窄螢幕選單固定為單列橫向捲動，避免選單高度佔據內容區或文字被擠壓。
+- 平板側邊選單可垂直捲動，橫放或矮視窗時仍可操作全部功能與登出。
+- 目前選單加入選取狀態，內容區保持獨立捲動。

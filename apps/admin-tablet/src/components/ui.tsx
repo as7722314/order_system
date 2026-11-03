@@ -1,12 +1,16 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import { createContext, useContext, useEffect, useId } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type KeyboardTypeOptions, type StyleProp, type ViewStyle } from "react-native";
 import { colors, radius } from "../theme";
+import { FeedbackToast, useFeedback } from "../feedback";
+
+const BusyContext = createContext(false);
 
 export function Page({ title, subtitle, action, children, refreshing = false, onRefresh }: PropsWithChildren<{ title: string; subtitle?: string; action?: ReactNode; refreshing?: boolean; onRefresh?: () => void }>) {
   return <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
     <View style={styles.pageHeader}>
       <View style={styles.titleBlock}><Text style={styles.pageTitle}>{title}</Text>{subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}</View>
-      <View style={styles.headerActions}>{onRefresh ? <Button label={refreshing ? "讀取中" : "重新整理"} variant="secondary" disabled={refreshing} onPress={onRefresh} /> : null}{action}</View>
+      <View style={styles.headerActions}>{onRefresh ? <Button label={refreshing ? "讀取中" : "重新整理"} variant="secondary" loading={refreshing} onPress={onRefresh} /> : null}{action}</View>
     </View>
     {children}
   </ScrollView>;
@@ -14,34 +18,40 @@ export function Page({ title, subtitle, action, children, refreshing = false, on
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "ghost";
 export function Button({ label, onPress, disabled, loading, variant = "primary", small, style }: { label: string; onPress?: () => void; disabled?: boolean; loading?: boolean; variant?: ButtonVariant; small?: boolean; style?: StyleProp<ViewStyle> }) {
-  return <Pressable accessibilityRole="button" disabled={disabled || loading} onPress={onPress} style={({ pressed }) => [styles.button, styles[`button_${variant}`], small && styles.buttonSmall, (pressed || disabled || loading) && styles.buttonDim, style]}>
-    {loading ? <ActivityIndicator size="small" color={variant === "secondary" || variant === "ghost" ? colors.text : "white"} /> : <Text style={[styles.buttonText, (variant === "secondary" || variant === "ghost") && styles.buttonTextDark]}>{label}</Text>}
+  const busy = useContext(BusyContext);
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: Boolean(disabled || loading || busy), busy: Boolean(loading) }} disabled={disabled || loading || busy} onPress={onPress} style={({ pressed }) => [styles.button, styles[`button_${variant}`], small && styles.buttonSmall, (pressed || disabled || loading || busy) && styles.buttonDim, style]}>
+    {loading ? <ActivityIndicator size="small" color={variant === "secondary" || variant === "ghost" ? colors.text : "white"} /> : null}<Text style={[styles.buttonText, (variant === "secondary" || variant === "ghost") && styles.buttonTextDark]}>{label}</Text>
   </Pressable>;
 }
 
 export function Field({ label, value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline, style }: { label: string; value: string; onChangeText: (value: string) => void; placeholder?: string; secureTextEntry?: boolean; keyboardType?: KeyboardTypeOptions; multiline?: boolean; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.field, style]}><Text style={styles.fieldLabel}>{label}</Text><TextInput autoCapitalize="none" autoCorrect={false} keyboardType={keyboardType} multiline={multiline} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#a8a29e" secureTextEntry={secureTextEntry} style={[styles.input, multiline && styles.textarea]} value={value} /></View>;
+  const busy = useContext(BusyContext);
+  return <View style={[styles.field, style]}><Text style={styles.fieldLabel}>{label}</Text><TextInput accessibilityLabel={label} editable={!busy} autoCapitalize="none" autoCorrect={false} keyboardType={keyboardType} multiline={multiline} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#a8a29e" secureTextEntry={secureTextEntry} style={[styles.input, multiline && styles.textarea]} value={value} /></View>;
 }
 
 export function ToggleField({ label, value, onValueChange }: { label: string; value: boolean; onValueChange: (value: boolean) => void }) {
-  return <View style={styles.toggle}><Text style={styles.fieldLabel}>{label}</Text><Switch trackColor={{ false: "#d6d3d1", true: "#fdba74" }} thumbColor={value ? colors.accent : "#f5f5f4"} value={value} onValueChange={onValueChange} /></View>;
+  const busy = useContext(BusyContext);
+  return <View style={styles.toggle}><Text style={styles.fieldLabel}>{label}</Text><Switch accessibilityLabel={label} disabled={busy} trackColor={{ false: "#d6d3d1", true: "#fdba74" }} thumbColor={value ? colors.accent : "#f5f5f4"} value={value} onValueChange={onValueChange} /></View>;
 }
 
-export function Card({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) { return <View style={[styles.card, style]}>{children}</View>; }
+export function Card({ children, style, feedbackId }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; feedbackId?: string }>) { const feedback = useFeedback(); return <View style={[styles.card, style, feedbackId && feedback.highlights.has(feedbackId) ? { backgroundColor: "#fbebcd", borderColor: "#d9b583" } : null]}>{children}</View>; }
 export function Divider() { return <View style={styles.divider} />; }
 export function ErrorNotice({ message }: { message?: string }) { return message ? <View style={styles.error}><Text style={styles.errorText}>{message}</Text></View> : null; }
 export function Empty({ text }: { text: string }) { return <View style={styles.empty}><Text style={styles.subtitle}>{text}</Text></View>; }
 
 export function Chip({ label, selected, onPress, tone = "default" }: { label: string; selected?: boolean; onPress?: () => void; tone?: "default" | "success" | "warning" | "danger" | "info" }) {
+  const busy = useContext(BusyContext);
   const palette = tone === "success" ? [colors.successSoft, colors.success] : tone === "warning" ? [colors.warningSoft, colors.warning] : tone === "danger" ? [colors.dangerSoft, colors.danger] : tone === "info" ? [colors.infoSoft, colors.info] : [colors.surfaceMuted, colors.textMuted];
-  return <Pressable disabled={!onPress} onPress={onPress} style={[styles.chip, { backgroundColor: selected ? colors.accent : palette[0], borderColor: selected ? colors.accent : palette[0] }]}><Text style={[styles.chipText, { color: selected ? "white" : palette[1] }]}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole={onPress ? "button" : undefined} accessibilityLabel={label} accessibilityState={{ selected: Boolean(selected), disabled: !onPress || busy }} disabled={!onPress || busy} onPress={onPress} style={[styles.chip, { backgroundColor: selected ? colors.accent : palette[0], borderColor: selected ? colors.accent : palette[0] }]}><Text style={[styles.chipText, { color: selected ? "white" : palette[1] }]}>{label}</Text></Pressable>;
 }
 
-export function FormModal({ visible, title, subtitle, children, onClose }: PropsWithChildren<{ visible: boolean; title: string; subtitle?: string; onClose: () => void }>) {
-  return <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}><View style={styles.modalBackdrop}><View style={styles.modalCard}>
-    <View style={styles.modalHeader}><View style={styles.titleBlock}><Text style={styles.modalTitle}>{title}</Text>{subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}</View><Button label="關閉" variant="ghost" small onPress={onClose} /></View>
-    <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">{children}</ScrollView>
-  </View></View></Modal>;
+export function FormModal({ visible, title, subtitle, children, onClose, busy = false }: PropsWithChildren<{ visible: boolean; title: string; subtitle?: string; busy?: boolean; onClose: () => void }>) {
+  const id = useId(); const { registerModal } = useFeedback();
+  useEffect(() => { registerModal(id, visible); return () => registerModal(id, false); }, [id, visible, registerModal]);
+  return <Modal animationType="fade" transparent visible={visible} onRequestClose={() => !busy && onClose()}><View style={styles.modalBackdrop}><View style={styles.modalCard}>
+    <View style={styles.modalHeader}><View style={styles.titleBlock}><Text style={styles.modalTitle}>{title}</Text>{subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}</View><Button label="關閉" variant="ghost" small disabled={busy} onPress={onClose} /></View>
+    <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled"><BusyContext.Provider value={busy}>{children}</BusyContext.Provider></ScrollView>
+  </View></View><FeedbackToast scope={id} /></Modal>;
 }
 
 export const ui = StyleSheet.create({
@@ -64,7 +74,7 @@ const styles = StyleSheet.create({
   pageTitle: { color: colors.text, fontSize: 27, fontWeight: "800" },
   subtitle: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
   headerActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  button: { minHeight: 44, borderRadius: radius.small, paddingHorizontal: 18, paddingVertical: 11, alignItems: "center", justifyContent: "center" },
+  button: { minHeight: 44, borderRadius: radius.small, paddingHorizontal: 18, paddingVertical: 11, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center" },
   buttonSmall: { minHeight: 36, paddingHorizontal: 12, paddingVertical: 7 },
   button_primary: { backgroundColor: colors.accent },
   button_secondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

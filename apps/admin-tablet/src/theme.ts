@@ -1,11 +1,11 @@
 export const colors = {
-  background: "#f7f5f2",
+  background: "#f8f3ea",
   surface: "#ffffff",
-  surfaceMuted: "#f3f1ee",
-  text: "#292524",
-  textMuted: "#78716c",
-  border: "#e7e5e4",
-  accent: "#9a3412",
+  surfaceMuted: "#f7f0e5",
+  text: "#392c23",
+  textMuted: "#7d6b5c",
+  border: "#e9ddce",
+  accent: "#b65324",
   accentSoft: "#ffedd5",
   success: "#047857",
   successSoft: "#d1fae5",
@@ -17,4 +17,4 @@ export const colors = {
   dangerSoft: "#fee2e2",
 } as const;
 
-export const radius = { small: 8, medium: 12, large: 18 } as const;
+export const radius = { small: 12, medium: 20, large: 24 } as const;

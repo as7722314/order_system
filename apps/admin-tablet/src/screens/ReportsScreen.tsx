@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useActionFeedback } from "../feedback";
 import { adminApi } from "../api";
 import { Button, Card, Empty, ErrorNotice, Field, Page, ui } from "../components/ui";
 import type { DailyReport, MonthlyReport } from "../types";
-import { errorMessage, money, taipeiDate, taipeiMonth } from "../utils";
+import { money, taipeiDate, taipeiMonth } from "../utils";
 
 function Summary({ report, label }: { report: DailyReport | MonthlyReport; label: string }) { const rows = [{ name: label, value: "date" in report ? report.date : report.month }, { name: "完成訂單", value: `${report.orderCount} 筆` }, { name: "營業額", value: money(report.totalRevenue) }, { name: "成本", value: money(report.totalExpense) }]; return <View style={ui.gap}>{rows.map((row) => <View key={row.name} style={ui.spread}><Text style={ui.muted}>{row.name}</Text><Text style={ui.body}>{row.value}</Text></View>)}</View>; }
 export function ReportsScreen() {
-  const [date, setDate] = useState(taipeiDate()); const [month, setMonth] = useState(taipeiMonth()); const [daily, setDaily] = useState<DailyReport | null>(null); const [monthly, setMonthly] = useState<MonthlyReport | null>(null); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
-  const loadDaily = async () => { setLoading(true); setError(""); try { setDaily(await adminApi.dailyReport(date)); } catch (reason) { setError(errorMessage(reason, "讀取日結報表失敗")); } finally { setLoading(false); } };
-  const loadMonthly = async () => { setLoading(true); setError(""); try { setMonthly(await adminApi.monthlyReport(month)); } catch (reason) { setError(errorMessage(reason, "讀取月結報表失敗")); } finally { setLoading(false); } };
-  return <Page title="報表" subtitle="營業額依已完成訂單統計；成本為成本管理登錄的金額合計"><ErrorNotice message={error} /><View style={styles.columns}><Card style={styles.column}><Text style={ui.sectionTitle}>日結</Text><View style={ui.row}><Field label="日期" placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} /><Button label="查詢日結" loading={loading} onPress={() => void loadDaily()} /></View>{daily ? <Summary report={daily} label="日期" /> : <Empty text="選擇日期後查詢" />}</Card><Card style={styles.column}><Text style={ui.sectionTitle}>月結</Text><View style={ui.row}><Field label="月份" placeholder="YYYY-MM" value={month} onChangeText={setMonth} /><Button label="查詢月結" loading={loading} onPress={() => void loadMonthly()} /></View>{monthly ? <Summary report={monthly} label="月份" /> : <Empty text="選擇月份後查詢" />}</Card></View>
+  const [date, setDate] = useState(taipeiDate()); const [month, setMonth] = useState(taipeiMonth()); const [daily, setDaily] = useState<DailyReport | null>(null); const [monthly, setMonthly] = useState<MonthlyReport | null>(null); const [error, setError] = useState("");
+  const action = useActionFeedback(setError);
+  const [activeReport, setActiveReport] = useState<"daily" | "monthly" | null>(null);
+  const loadDaily = async () => { if (action.busy) return; setActiveReport("daily"); setDaily(null); await action.run(async () => { const result = await adminApi.dailyReport(date); setDaily(result); }, { success: "日結報表已更新", failure: "讀取日結報表失敗" }); };
+  const loadMonthly = async () => { if (action.busy) return; setActiveReport("monthly"); setMonthly(null); await action.run(async () => { const result = await adminApi.monthlyReport(month); setMonthly(result); }, { success: "月結報表已更新", failure: "讀取月結報表失敗" }); };
+  return <Page title="報表" subtitle="營業額依已完成訂單統計；成本為成本管理登錄的金額合計"><ErrorNotice message={error} /><View style={styles.columns}><Card style={styles.column}><Text style={ui.sectionTitle}>日結</Text><View style={ui.row}><Field label="日期" placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} /><Button label="查詢日結" disabled={action.busy} loading={action.busy && activeReport === "daily"} onPress={() => void loadDaily()} /></View>{daily ? <Summary report={daily} label="日期" /> : <Empty text="選擇日期後查詢" />}</Card><Card style={styles.column}><Text style={ui.sectionTitle}>月結</Text><View style={ui.row}><Field label="月份" placeholder="YYYY-MM" value={month} onChangeText={setMonth} /><Button label="查詢月結" disabled={action.busy} loading={action.busy && activeReport === "monthly"} onPress={() => void loadMonthly()} /></View>{monthly ? <Summary report={monthly} label="月份" /> : <Empty text="選擇月份後查詢" />}</Card></View>
     {monthly?.daily.length ? <Card><Text style={ui.sectionTitle}>月結每日明細</Text>{monthly.daily.map((row) => <View key={row.date} style={styles.dailyRow}><Text style={ui.title}>{row.date}</Text><Text style={ui.body}>營收 {money(row.revenue)}</Text><Text style={ui.body}>成本 {money(row.expense)}</Text></View>)}</Card> : null}
   </Page>;
 }
